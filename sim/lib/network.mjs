@@ -12,13 +12,13 @@ export async function network(testnet) {
     const cfg = JSON.parse(readFileSync(join(HERE, "keys", "testnet.json"), "utf8"));
     return {
       name: "testnet",
-      rpcUrl: cfg.rpcUrl ?? "https://test.rpc.fastnear.com",
+      rpcUrl: cfg.rpcUrl ?? "https://test.rpc.fastnear.com,https://near-testnet.drpc.org",
       parentId: cfg.accountId,
       humanKey: cfg.privateKey,
       // Testnet gas is prepaid per call, so each agent needs headroom. See README for funding.
       nearRoot: BigInt(cfg.rootNear ?? 21) * NEAR,
       nearContract: { splitback: 3n * NEAR + NEAR / 2n, usdc: 2n * NEAR + NEAR / 2n },
-      nearAgent: (NEAR * 45n) / 100n,
+      nearAgent: (NEAR * 30n) / 100n,
       stop: async () => {},
     };
   }
@@ -33,7 +33,8 @@ export async function network(testnet) {
     nearRoot: 400n * NEAR,
     nearContract: { splitback: 20n * NEAR, usdc: 20n * NEAR },
     nearAgent: 5n * NEAR,
-    stop: () => sandbox.tearDown(),
+    // Never let a slow sandbox shutdown hold the script open.
+    stop: () => Promise.race([sandbox.tearDown().catch(() => {}), new Promise((r) => setTimeout(r, 8000))]),
   };
 }
 

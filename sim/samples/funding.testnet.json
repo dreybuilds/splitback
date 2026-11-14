@@ -1,0 +1,80 @@
+{
+  "network": "testnet",
+  "contract": "splitback.smwg05fxf.splitback-swarm4.testnet",
+  "settlement_token": "usdc.smwg05fxf.splitback-swarm4.testnet",
+  "explorer_tx_url": "https://testnet.nearblocks.io/txns/",
+  "stand_ins": {
+    "usdt-eth.fmwg1ygbw.splitback-swarm5.testnet": "USDT on eth, 6 decimals",
+    "dai-eth.fmwg1ygbw.splitback-swarm5.testnet": "DAI on eth, 18 decimals"
+  },
+  "top_ups": [
+    {
+      "agent": "desk-a.fmwg1ygbw.splitback-swarm5.testnet",
+      "paid_in": "USDC on near",
+      "amount_in": "100",
+      "credited_micro_usdc": "100000000",
+      "rate_source": "no swap",
+      "deposit_tx": null,
+      "delivery_tx": "GVeVrdkrUFKCvzCzAxyiH3wdzg8byBqAqJztJ5JvGXfx"
+    },
+    {
+      "agent": "desk-b.fmwg1ygbw.splitback-swarm5.testnet",
+      "paid_in": "USDT on eth",
+      "amount_in": "20",
+      "credited_micro_usdc": "19978350",
+      "rate_source": "live 1Click dry quote",
+      "estimated_seconds": 45,
+      "deposit_tx": "CahgU73o1wSaa7tASwwCq8QRbQYrBNJEFW1uBoaawmvT",
+      "delivery_tx": "BPLwNGqcuyKTksK4jrvSAp6xoPhpkZRt7cENmiZKu2g8"
+    },
+    {
+      "agent": "desk-c.fmwg1ygbw.splitback-swarm5.testnet",
+      "paid_in": "DAI on eth",
+      "amount_in": "200",
+      "credited_micro_usdc": "199583693",
+      "rate_source": "live 1Click dry quote",
+      "estimated_seconds": 47,
+      "deposit_tx": "GrFnoFNGM3e5QhQyk2N19PYHJQNXZFBDtSGFwzsUfBP8",
+      "delivery_tx": "EwLtkwhY5QNuQ9BPDWBes7n8CcJ5kVqM8sSerZYxeduz"
+    }
+  ],
+  "purchases": [
+    {
+      "agent": "desk-a.fmwg1ygbw.splitback-swarm5.testnet",
+      "action": "publish",
+      "entry": 10,
+      "price_micro_usdc": "30000000",
+      "tx": "GVkcPbjgevoZekveMtahXEbVbPuqGGyGyeP6aJdAUk4h"
+    },
+    {
+      "agent": "desk-b.fmwg1ygbw.splitback-swarm5.testnet",
+      "action": "join",
+      "entry": 10,
+      "price_micro_usdc": "15000000",
+      "tx": "72Ck4pCAXRMCNQ2yvNGwbLkg2U7n2xYX51F9WR7WeuJA"
+    },
+    {
+      "agent": "desk-c.fmwg1ygbw.splitback-swarm5.testnet",
+      "action": "join",
+      "entry": 10,
+      "price_micro_usdc": "10000000",
+      "tx": "Cwp5QXb1t8AaaUmYCPnBC1eyp32uh8nvyXiUjiv7Supa"
+    }
+  ],
+  "cash_out": {
+    "account": "provider.fmwg1ygbw.splitback-swarm5.testnet",
+    "withdrew_micro_usdc": "30000000",
+    "received": "USDT on eth",
+    "received_units": "29716624",
+    "rate_source": "live 1Click dry quote",
+    "withdraw_tx": "6qkFd4d4wEf9ve3Wm7V6gXZUDi4PRVyPWAaoi37kAm5h",
+    "deposit_tx": "BWcBymJPhKtw2pHivaJUrBaRbEAEoKddd7MZ6MuobyU5",
+    "payout_tx": "7YyeqTyuX95n9aYFcsGJyGLRKM8XA2zK65RKSXeZHVMt"
+  },
+  "problems": [],
+  "wrong_token_deposit": {
+    "token": "usdt-eth.fmwg1ygbw.splitback-swarm5.testnet",
+    "refused": true,
+    "returned_to_owner": true
+  }
+}

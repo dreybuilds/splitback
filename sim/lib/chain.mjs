@@ -13,8 +13,16 @@ export function publicKeyOf(secret) {
   return KeyPair.fromString(secret).getPublicKey();
 }
 
+// `rpcUrl` may be a comma-separated list. Public endpoints rate-limit, so accounts
+// are spread across them and reads rotate.
+let turn = 0;
+const pick = (rpcUrl) => {
+  const urls = String(rpcUrl).split(",");
+  return urls[turn++ % urls.length];
+};
+
 export function account(rpcUrl, id, secret) {
-  return new Account(id, rpcUrl, secret);
+  return new Account(id, pick(rpcUrl), secret);
 }
 
 /** Read-only contract call over plain JSON-RPC. */
@@ -32,7 +40,7 @@ export async function view(rpcUrl, contractId, method, args = {}) {
 }
 
 async function viewOnce(rpcUrl, contractId, method, args) {
-  const res = await fetch(rpcUrl, {
+  const res = await fetch(pick(rpcUrl), {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
@@ -78,7 +86,7 @@ function outcomeOf(resp) {
 /** Sends actions and returns { value, logs, txHash }. Throws on any failed receipt. */
 export async function send(acct, receiverId, acts) {
   let lastErr;
-  for (let attempt = 0; attempt < 8; attempt++) {
+  for (let attempt = 0; attempt < 12; attempt++) {
     try {
       const resp = await acct.signAndSendTransaction({
         receiverId,
@@ -96,7 +104,7 @@ export async function send(acct, receiverId, acts) {
     } catch (e) {
       if (e.contractFailure) throw e;
       lastErr = e;
-      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+      await new Promise((r) => setTimeout(r, Math.min(20000, 2000 * (attempt + 1))));
     }
   }
   throw lastErr;
@@ -123,7 +131,7 @@ export function deploy(acct, wasm, initMethod, initArgs) {
 }
 
 export async function exists(rpcUrl, id) {
-  const res = await fetch(rpcUrl, {
+  const res = await fetch(pick(rpcUrl), {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({

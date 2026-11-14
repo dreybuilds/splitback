@@ -181,7 +181,7 @@ const COST = 1_500_000n;
 async function publish(seller, manifest, text) {
   const spec = `brief:${manifest}`.slice(0, 256);
   const { value } = await call(agents[seller], SB, "publish", {
-    task_key: taskKey(spec), spec, result_hash: sha256hex(text), cost: COST.toString(), provider: null,
+    task_key: taskKey(spec), spec, result_hash: sha256hex(text), cost: COST.toString(), provider: null, delivery_fee: null,
   });
   return value;
 }

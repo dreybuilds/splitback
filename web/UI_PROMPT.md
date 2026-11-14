@@ -86,21 +86,23 @@ POST to `rpcUrl`:
 
 | Method | Args | Returns |
 |---|---|---|
-| `get_stats` | `{}` | `{ entries, joins, voided, cost_published, paid_in, rebated, slashed }` (counts are numbers, amounts are strings) |
+| `get_stats` | `{}` | `{ entries, joins, voided, cost_published, paid_in, rebated, slashed, delivery_fees }` (counts are numbers, amounts are strings) |
 | `get_entries` | `{ "from_index": 0, "limit": 100 }` | array of entries (below) |
 | `get_entry` | `{ "entry_id": 3 }` | one entry or null |
 | `get_config` | `{}` | `{ token, verifiers: [account ids], threshold, challenge_window_ns, challenge_stake_divisor, bond_multiplier }` |
 | `balance_of` | `{ "account_id": "..." }` | amount string |
-| `get_holding` | `{ "entry_id": 3, "account_id": "..." }` | `{ paid, claimed, joined_as, claimable }` or null |
-| `quote` | `{ "entry_id": 3 }` | amount string: the next buyer's price |
+| `get_holding` | `{ "entry_id": 3, "account_id": "..." }` | `{ paid, fee_paid, claimed, joined_as, claimable }` or null |
+| `quote` | `{ "entry_id": 3 }` | amount string: the next buyer's total price (share plus delivery fee) |
 
-An entry:
+An entry. `next_price` is what the next buyer pays in total: `next_share` (its equal share) plus `next_fee` (a flat delivery fee the publisher set, which goes to the publisher and is outside the split). Show the share and the fee separately on each card.
 
 ```json
 { "id": 6, "task_key": "<64 hex>", "spec": "orderbook-replay:market=NEAR-USDC;seed=2026-11-13;events=1500000",
   "result_hash": "<64 hex>", "cost": "2000000", "publisher": "seller-2....testnet", "provider": null,
   "holders": 5, "status": "Open", "challenger": null, "votes_uphold": [], "votes_reject": [], "bond": "4000000",
-  "paid_in": "1716667", "rebated": "1716665", "current_share": "400000", "next_price": "333334",
+  "delivery_fee": "20000", "fees_collected": "80000",
+  "paid_in": "1716667", "rebated": "1716665", "current_share": "400000",
+  "next_price": "353334", "next_share": "333334", "next_fee": "20000",
   "created_at": "<ns timestamp>", "last_activity": "<ns timestamp>" }
 ```
 

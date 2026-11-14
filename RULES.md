@@ -13,7 +13,8 @@ These rules were written before the contract. The contract in `contracts/splitba
 | Holder | An account with the right to the result. The publisher is holder number 1. |
 | `k` | The number of holders of an entry, publisher included. |
 | Share | `ceil(C / k)`. What every holder has paid, net, once rebates are claimed. |
-| Bond | Tokens the publisher locks at publish time. Always `2 × C`. |
+| Bond | Tokens the publisher locks at publish time. `2 × C`, or `3 × C` if the entry charges a delivery fee. |
+| Delivery fee | Optional. A flat amount each buyer pays the publisher on top of its share, for storing and serving the bytes. Set at publish time, at most `C`. |
 | Provider | Optional. The account that did the work for the publisher. If named, the publisher pays it `C` inside the same call. |
 | Verifiers | The committee that rules on challenges: a fixed list of accounts and a threshold that is a strict majority. In the scripted demo they are agents that recompute the task. In `sim/judge.mjs` they are agents backed by three different models on NEAR AI Cloud. |
 
@@ -21,17 +22,19 @@ These rules were written before the contract. The contract in `contracts/splitba
 
 1. **Prepaid balances.** Agents hold a token balance inside the contract. A balance is credited by `ft_transfer_call` on the token, and anyone may fund any account. All prices are debited from this balance, so a purchase is one transaction with no token transfer.
 2. **Publish.** A publisher records `(task key, spec, result hash, C)` and the contract locks a bond of `2 × C` from the publisher's balance. The publisher becomes holder 1 and is treated as having paid `C`. If the publisher names a provider, the contract also moves `C` from the publisher to the provider in the same call, so the cost is a payment the chain saw.
-3. **Join.** A buyer joins an open entry by paying `ceil(C / (k + 1))`. `k` then increases by one. The buyer may pass a `max_price`; the call fails if the price is higher.
+3. **Join.** A buyer joins an open entry by paying `ceil(C / (k + 1))`. `k` then increases by one. The buyer may pass a `max_price`; the call fails if the total is higher.
+   - **Delivery fee.** If the entry has one, the buyer pays it as well and it goes straight to the publisher. It is outside the split: it is never rebated and does not change anyone's share. An entry stops charging the fee once its fees total `C`, which is what the extra `C` of bond covers.
+   - **Not covered.** Each agent pays its own NEAR gas. That is outside the token accounting.
 4. **Rebate.** At any time a holder may claim `paid − ceil(C / k) − already claimed`. After claiming, every holder's net cost is exactly `ceil(C / k)`, whenever they joined. Joining early is never punished.
 5. **Solvency.** Buyers pay in `sum of ceil(C / j)` for `j = 2..k`. Holders are owed at most `C + that sum − k × ceil(C / k)`. Because `k × ceil(C / k) ≥ C`, the pool always covers what is owed. Rounding dust (less than `k` units per entry) stays in the contract.
 6. **Several entries per task.** Anyone may publish a competing entry for the same task key at a lower `C`. Buyers choose. An inflated `C` is undercut.
 7. **Challenge.** Anyone may challenge an open or retired entry by staking `ceil(C / 10)`. One challenge at a time per entry.
 8. **Vote.** Each verifier votes once per challenge, to uphold or to reject. The challenge is decided the moment either side reaches the threshold. Because the threshold is a strict majority, both sides can never reach it.
-   - **Upheld:** the entry is void. Every buyer may claim back everything they paid net of rebates. The forfeit is the bond minus whatever the publisher had already claimed in rebates. The challenger gets their stake back plus the forfeit, less the verifiers' cut. The publisher gets nothing further.
+   - **Upheld:** the entry is void. Every buyer may claim back everything they paid net of rebates, including the delivery fee. The forfeit is the bond minus whatever the publisher had already claimed in rebates and collected in delivery fees. The challenger gets their stake back plus the forfeit, less the verifiers' cut. The publisher gets nothing further.
    - **Rejected:** the forfeit is the stake. It goes to the publisher, less the verifiers' cut, and the entry returns to its previous state.
    - **Verifiers' cut:** a tenth of the forfeit, split equally among the verifiers who voted with the outcome. A verifier who voted against it, or did not vote, gets nothing.
    - **No decision:** if the threshold is not reached within the challenge window, anyone may lapse the challenge. The stake returns to the challenger, the entry returns to its previous state, and nobody is punished. Offline verifiers cannot freeze an entry.
-9. **Why the bond is `2 × C`.** The only money that can have left an entry's pool to someone who must not keep it is the publisher's claimed rebates, which are always less than `C`. A bond of `C` would make buyers whole, but a caught publisher would then lose only `C / k`, which shrinks as buyers join. With `2 × C` a caught publisher always loses more than `C`, and the challenger's reward is at least `0.9 × C`.
+9. **Why the bond is `2 × C`.** The only money that can have left an entry's pool to someone who must not keep it is the publisher's claimed rebates, which are always less than `C`. A bond of `C` would make buyers whole, but a caught publisher would then lose only `C / k`, which shrinks as buyers join. With `2 × C` a caught publisher always loses more than `C`, and the challenger's reward is at least `0.9 × C`. An entry with a delivery fee bonds `3 × C` so that the same holds after its fees, which total at most `C`, are refunded.
 10. **Retire and release.** The publisher may retire an entry, which stops new joins. Once the challenge window has passed since the last join or rejected challenge, and no challenge is pending, the publisher may take the bond back. Holders can still claim rebates afterwards. An entry whose bond has been released can no longer be challenged.
 11. **Withdraw.** Any account may withdraw its balance to itself as tokens.
 
@@ -66,7 +69,7 @@ A result is just bytes. Once one agent holds it, nothing on chain stops that age
 | Objection | Answer |
 |---|---|
 | Holders can leak the result | Partly answered. Every holder is paid a rebate each time a new buyer joins, so every holder loses money by leaking. That is an incentive, not enforcement. |
-| Publisher inflates `C` | Answered by rule 6: a cheaper competing entry takes the buyers. A buyer also never pays more than its own recompute cost, because it can always compute instead. |
+| Publisher inflates `C` | Answered by rule 6: a cheaper competing entry takes the buyers. A buyer also never pays more than its own recompute cost, because it can always compute instead. `C` is still a declared number; naming a provider makes it a payment the chain saw, but the contract cannot measure the work. |
 | Publisher copied the result | Not answered. The contract rewards whoever publishes first with a bond; it does not prove authorship. |
 | Wrong or poisoned result | Answered for deterministic tasks by rules 7 to 9. |
 | Non-deterministic work | Answered in part. The scripted market uses only tasks a verifier can recompute. `sim/judge.mjs` shows the same contract ruling on written briefs with a committee of three models on NEAR AI Cloud, each answer signed by NEAR AI. Model judgement can be wrong; the majority rule limits one bad judge, not three. |

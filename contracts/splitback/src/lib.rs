@@ -20,6 +20,9 @@ const CHALLENGE_STAKE_DIVISOR: u128 = 10;
 /// The bond is cost * BOND_MULTIPLIER, so a publisher caught with a wrong result
 /// always loses more than the full cost, however many rebates it already claimed.
 const BOND_MULTIPLIER: u128 = 2;
+/// An entry that charges a delivery fee can collect at most `cost` in fees in
+/// total, and bonds that much extra, so the fees are always refundable.
+const FEE_BOND_MULTIPLIER: u128 = 1;
 /// Share of the losing side's forfeit that goes to the verifiers who voted with
 /// the outcome, split equally.
 const VERIFIER_CUT_DIVISOR: u128 = 10;
@@ -66,6 +69,8 @@ pub struct Entry {
     votes_uphold: Vec<AccountId>,
     votes_reject: Vec<AccountId>,
     bond: u128,
+    delivery_fee: u128,
+    fees_collected: u128,
     paid_in: u128,
     rebated: u128,
     created_at: u64,
@@ -76,6 +81,7 @@ pub struct Entry {
 #[derive(Clone)]
 pub struct Holding {
     paid: u128,
+    fee_paid: u128,
     claimed: u128,
     joined_as: u32,
 }
@@ -95,10 +101,15 @@ pub struct EntryView {
     pub votes_uphold: Vec<AccountId>,
     pub votes_reject: Vec<AccountId>,
     pub bond: U128,
+    pub delivery_fee: U128,
+    pub fees_collected: U128,
     pub paid_in: U128,
     pub rebated: U128,
     pub current_share: U128,
+    /// What the next buyer pays in total: its share plus the delivery fee.
     pub next_price: U128,
+    pub next_share: U128,
+    pub next_fee: U128,
     pub created_at: U64,
     pub last_activity: U64,
 }
@@ -106,6 +117,7 @@ pub struct EntryView {
 #[near(serializers = [json])]
 pub struct HoldingView {
     pub paid: U128,
+    pub fee_paid: U128,
     pub claimed: U128,
     pub joined_as: u32,
     pub claimable: U128,
@@ -121,6 +133,7 @@ pub struct Stats {
     pub paid_in: U128,
     pub rebated: U128,
     pub slashed: U128,
+    pub delivery_fees: U128,
 }
 
 #[near(serializers = [json])]
@@ -131,6 +144,7 @@ pub struct Config {
     pub challenge_window_ns: U64,
     pub challenge_stake_divisor: u32,
     pub bond_multiplier: u32,
+    pub fee_bond_multiplier: u32,
 }
 
 #[near(contract_state)]
@@ -231,6 +245,8 @@ impl Splitback {
     /// Rule 2. Locks a bond of twice `cost` from the caller's balance.
     /// If `provider` is given, the caller also pays `cost` to that account here,
     /// so the price of the work is a payment the chain saw, not a claim.
+    /// `delivery_fee` is a flat amount each buyer pays the publisher on top of
+    /// its share, for storing and serving the bytes. It sits outside the split.
     pub fn publish(
         &mut self,
         task_key: String,
@@ -238,13 +254,17 @@ impl Splitback {
         result_hash: String,
         cost: U128,
         provider: Option<AccountId>,
+        delivery_fee: Option<U128>,
     ) -> u32 {
         require!(is_hash(&task_key), "task_key must be 64 lowercase hex chars");
         require!(is_hash(&result_hash), "result_hash must be 64 lowercase hex chars");
         require!(spec.len() <= MAX_SPEC_LEN, "spec too long");
         require!(cost.0 > 0, "cost must be positive");
         let publisher = env::predecessor_account_id();
-        let bond = cost.0 * BOND_MULTIPLIER;
+        let delivery_fee = delivery_fee.map(|f| f.0).unwrap_or(0);
+        require!(delivery_fee <= cost.0, "delivery fee cannot exceed the cost");
+        let fee_bond = if delivery_fee > 0 { cost.0 * FEE_BOND_MULTIPLIER } else { 0 };
+        let bond = cost.0 * BOND_MULTIPLIER + fee_bond;
         self.debit(&publisher, bond);
         if let Some(p) = &provider {
             require!(*p != publisher, "provider must be a different account");
@@ -270,6 +290,8 @@ impl Splitback {
             votes_uphold: Vec::new(),
             votes_reject: Vec::new(),
             bond,
+            delivery_fee,
+            fees_collected: 0,
             paid_in: 0,
             rebated: 0,
             created_at: now,
@@ -277,7 +299,7 @@ impl Splitback {
         });
         self.holdings.insert(
             (id, publisher.clone()),
-            Holding { paid: cost.0, claimed: 0, joined_as: 1 },
+            Holding { paid: cost.0, fee_paid: 0, claimed: 0, joined_as: 1 },
         );
         let mut ids = self.by_key.get(&task_key).cloned().unwrap_or_default();
         ids.push(id);
@@ -289,7 +311,7 @@ impl Splitback {
             "publish",
             near_sdk::serde_json::json!({
                 "entry": id, "task_key": task_key, "result_hash": result_hash,
-                "publisher": publisher, "provider": provider, "cost": cost, "bond": U128(bond)
+                "publisher": publisher, "provider": provider, "cost": cost, "bond": U128(bond), "delivery_fee": U128(delivery_fee)
             }),
         );
         id
@@ -297,7 +319,8 @@ impl Splitback {
 
     // -------------------------------------------------------------------- join
 
-    /// Rule 3. Pays ceil(cost / (k + 1)) and becomes holder k + 1.
+    /// Rule 3. Pays ceil(cost / (k + 1)), plus the entry's delivery fee, and
+    /// becomes holder k + 1. `max_price` bounds the total.
     pub fn join(&mut self, entry_id: u32, max_price: Option<U128>) -> U128 {
         let buyer = env::predecessor_account_id();
         let mut entry = self.entry(entry_id);
@@ -308,13 +331,21 @@ impl Splitback {
         );
         let k = entry.holders + 1;
         let price = share(entry.cost, k);
+        let fee = Self::next_fee(&entry);
         if let Some(max) = max_price {
-            require!(price <= max.0, "price is above max_price");
+            require!(price + fee <= max.0, "price is above max_price");
         }
-        self.debit(&buyer, price);
+        self.debit(&buyer, price + fee);
+        if fee > 0 {
+            // The delivery fee goes straight to the publisher. It is outside the split.
+            let publisher = entry.publisher.clone();
+            self.credit(&publisher, fee);
+            entry.fees_collected += fee;
+            self.stats.delivery_fees.0 += fee;
+        }
         self.holdings.insert(
             (entry_id, buyer.clone()),
-            Holding { paid: price, claimed: 0, joined_as: k },
+            Holding { paid: price, fee_paid: fee, claimed: 0, joined_as: k },
         );
         entry.holders = k;
         entry.paid_in += price;
@@ -325,12 +356,12 @@ impl Splitback {
             "join",
             near_sdk::serde_json::json!({
                 "entry": entry_id, "task_key": entry.task_key, "result_hash": entry.result_hash,
-                "buyer": buyer, "seller": entry.publisher, "price": U128(price),
+                "buyer": buyer, "seller": entry.publisher, "price": U128(price), "delivery_fee": U128(fee),
                 "holders": k, "cost": U128(entry.cost)
             }),
         );
         self.entries.replace(entry_id, entry);
-        U128(price)
+        U128(price + fee)
     }
 
     // ------------------------------------------------------------------- claim
@@ -540,6 +571,7 @@ impl Splitback {
             challenge_window_ns: U64(self.challenge_window_ns),
             challenge_stake_divisor: CHALLENGE_STAKE_DIVISOR as u32,
             bond_multiplier: BOND_MULTIPLIER as u32,
+            fee_bond_multiplier: FEE_BOND_MULTIPLIER as u32,
         }
     }
 
@@ -575,10 +607,10 @@ impl Splitback {
             .unwrap_or_default()
     }
 
-    /// The price the next buyer would pay.
+    /// The total the next buyer would pay: its share plus the delivery fee.
     pub fn quote(&self, entry_id: u32) -> U128 {
         let e = self.entry(entry_id);
-        U128(share(e.cost, e.holders + 1))
+        U128(share(e.cost, e.holders + 1) + Self::next_fee(&e))
     }
 
     pub fn get_holding(&self, entry_id: u32, account_id: AccountId) -> Option<HoldingView> {
@@ -586,6 +618,7 @@ impl Splitback {
         let h = self.holdings.get(&(entry_id, account_id.clone()))?;
         Some(HoldingView {
             paid: U128(h.paid),
+            fee_paid: U128(h.fee_paid),
             claimed: U128(h.claimed),
             joined_as: h.joined_as,
             claimable: U128(Self::claimable_of(entry, h, &account_id)),
@@ -615,7 +648,9 @@ impl Splitback {
             let pub_claimed = pub_holding.claimed;
             pub_holding.claimed = pub_holding.paid;
             self.holdings.insert(key, pub_holding);
-            forfeit = entry.bond - pub_claimed;
+            // Delivery fees were paid out to the publisher as they came in; the bond
+            // also covers refunding them.
+            forfeit = entry.bond - pub_claimed - entry.fees_collected;
             entry.bond = 0;
             entry.status = Status::Voided;
             self.stats.voided += 1;
@@ -670,6 +705,11 @@ impl Splitback {
         self.balances.insert(account.clone(), bal - amount);
     }
 
+    /// The fee the next join pays: the entry's fee, until fees total the cost.
+    fn next_fee(entry: &Entry) -> u128 {
+        entry.delivery_fee.min(entry.cost - entry.fees_collected)
+    }
+
     fn claimable_of(entry: &Entry, holding: &Holding, who: &AccountId) -> u128 {
         if entry.status == Status::Voided {
             // Buyers get back everything they paid net of rebates. The publisher's
@@ -677,7 +717,7 @@ impl Splitback {
             if *who == entry.publisher {
                 return 0;
             }
-            return holding.paid - holding.claimed;
+            return holding.paid + holding.fee_paid - holding.claimed;
         }
         let net_target = share(entry.cost, entry.holders);
         holding.paid.saturating_sub(net_target).saturating_sub(holding.claimed)
@@ -698,10 +738,14 @@ impl Splitback {
             votes_uphold: e.votes_uphold.clone(),
             votes_reject: e.votes_reject.clone(),
             bond: U128(e.bond),
+            delivery_fee: U128(e.delivery_fee),
+            fees_collected: U128(e.fees_collected),
             paid_in: U128(e.paid_in),
             rebated: U128(e.rebated),
             current_share: U128(share(e.cost, e.holders)),
-            next_price: U128(share(e.cost, e.holders + 1)),
+            next_price: U128(share(e.cost, e.holders + 1) + Self::next_fee(e)),
+            next_share: U128(share(e.cost, e.holders + 1)),
+            next_fee: U128(Self::next_fee(e)),
             created_at: U64(e.created_at),
             last_activity: U64(e.last_activity),
         }
