@@ -144,6 +144,8 @@ The scripted market only sells work a verifier can recompute. `sim/judge.mjs` ha
 - NEAR AI signs each model response. The script fetches the signature, checks that the signed text is the hash of this exact request and response, recovers the signer, and stores all of it beside the vote.
 - This is a surface check. It does not verify the hardware attestation quote behind the signing key.
 
+A recorded run is in [`sim/samples/judgements.sample.json`](sim/samples/judgements.sample.json), with the briefs, each model's answer, its vote and its NEAR AI signature. In that run the tampered brief was voided 2 to 0. On the honest brief one model voted to uphold the challenge, because the brief mentioned a spread the reference did not list, and the other two outvoted it. That is the majority rule doing its job, and also a fair picture of how far model judgement can be trusted.
+
 ## Failure cases
 
 | Case | What happens |

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Splitback: agents split the cost of a result</title>
+<meta name="description" content="Splitback is a NEAR contract where AI agents split the cost of a computed result. The price falls every time another agent needs it.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="scene" aria-hidden="true">
+  <div class="layer eq eq-far" data-depth="1" data-range="180" data-pointer="4"></div>
+  <div class="layer eq eq-mid" data-depth="2" data-range="420" data-pointer="9"></div>
+  <div class="layer shapes" data-range="640" data-pointer="14">
+    <div class="blob b1"></div>
+    <div class="ring r1"></div>
+    <div class="grid-plane g1"></div>
+    <div class="blob b2"></div>
+    <div class="ring r2"></div>
+    <div class="grid-plane g2"></div>
+    <div class="blob b3"></div>
+  </div>
+  <div class="layer eq eq-near" data-depth="3" data-range="900" data-pointer="20"></div>
+</div>
+
+<main>
+  <header class="panel hero">
+    <div class="hero-top">
+      <h1>Splitback</h1>
+      <button id="theme" class="btn" type="button" aria-label="Switch colour theme">Light theme</button>
+    </div>
+    <p class="tagline">Agents split the cost of a result. The price falls every time another agent needs it.</p>
+    <dl class="meta">
+      <div><dt>Network</dt><dd id="net">loading</dd></div>
+      <div><dt>Contract</dt><dd><code id="contract">loading</code> <button id="copy" class="btn small" type="button">Copy</button></dd></div>
+      <div><dt>Data</dt><dd><span id="dot" class="dot loading"></span><span id="status">Loading</span></dd></div>
+    </dl>
+  </header>
+
+  <div id="problems" class="panel warning" hidden></div>
+
+  <section aria-labelledby="h-mech">
+    <div class="plate"><h2 id="h-mech">The mechanism</h2>
+      <p>Each buyer pays an equal share of the original cost, and the contract pays the earlier holders back. Everyone ends up having paid <code>⌈C / k⌉</code>, whenever they joined.</p></div>
+    <div class="panel mech">
+      <div class="controls">
+        <label><span>Cost <code>C</code></span>
+          <input id="mc" type="number" min="1" max="100000" step="1" value="12" inputmode="decimal">
+        </label>
+        <label class="grow"><span>Holders <code>k</code> = <output id="mkOut">3</output></span>
+          <span class="stepper">
+            <button id="mkDown" class="btn small" type="button" aria-label="One holder fewer">−</button>
+            <input id="mk" type="range" min="1" max="20" step="1" value="3">
+            <button id="mkUp" class="btn small" type="button" aria-label="One holder more">+</button>
+          </span>
+        </label>
+      </div>
+      <p class="chain" id="mChain" aria-live="polite"></p>
+      <div class="mech-grid">
+        <div class="readouts" id="mRead"></div>
+        <div>
+          <div class="bars" id="mBars" role="img" aria-label="What each holder paid at first and what each has paid net"></div>
+          <p class="hint">Outline: what each holder paid when it joined. Filled: what it has paid net after rebates.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-num">
+    <div class="plate"><h2 id="h-num">Headline numbers</h2><p id="numNote"></p></div>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section aria-labelledby="h-ent">
+    <div class="plate"><h2 id="h-ent">Entries</h2><p id="entNote"></p></div>
+    <div class="cards" id="entries"></div>
+  </section>
+
+  <section aria-labelledby="h-rounds">
+    <div class="plate"><h2 id="h-rounds">Rounds</h2><p>What the agents did, in order. Round 0 is the sellers publishing.</p></div>
+    <div class="rounds" id="rounds"></div>
+  </section>
+
+  <section aria-labelledby="h-rec">
+    <div class="plate"><h2 id="h-rec">Receipts</h2><p id="recNote"></p></div>
+    <div class="panel table-wrap" tabindex="0" role="region" aria-labelledby="h-rec">
+      <table>
+        <thead><tr><th>Round</th><th>Buyer</th><th>Bought</th><th>From</th><th class="num">Price</th><th class="num">Alone</th><th>Hash check</th><th>Audit</th><th>Tx</th></tr></thead>
+        <tbody id="receipts"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-bad">
+    <div class="plate"><h2 id="h-bad">The bad actor</h2><p>One seller published a wrong result. This is what it cost.</p></div>
+    <div class="panel" id="bad"></div>
+  </section>
+
+  <footer class="panel">
+    <p id="links"></p>
+    <p>Test token on NEAR testnet. Not a real stablecoin.</p>
+  </footer>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

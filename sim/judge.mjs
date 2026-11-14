@@ -41,7 +41,8 @@ const WRITER = process.env.WRITER_MODEL ?? WANTED[1];
 
 const sha = (s) => createHash("sha256").update(s).digest("hex");
 
-async function chat(model, messages, maxTokens = 900) {
+// These are reasoning models: thinking tokens count against max_tokens, so leave room.
+async function chat(model, messages, maxTokens = 6000) {
   const body = JSON.stringify({ model, messages, max_tokens: maxTokens, temperature: 0.2, stream: false });
   for (let attempt = 0; ; attempt++) {
     const res = await fetch(`${API}/chat/completions`, {
@@ -129,8 +130,16 @@ const briefPrompt = (facts) => [
 ];
 
 log(`writing two briefs with ${WRITER} ...`);
-const honest = await chat(WRITER, briefPrompt(factsA));
-const poisoned = await chat(WRITER, briefPrompt(tampered));
+async function writeBrief(facts) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const c = await chat(WRITER, briefPrompt(facts));
+    if (c.text.trim().length > 200) return c;
+  }
+  console.error(`${WRITER} returned no usable brief after 3 tries. Set WRITER_MODEL to another model id.`);
+  process.exit(2);
+}
+const honest = await writeBrief(factsA);
+const poisoned = await writeBrief(tampered);
 
 // --------------------------------------------------------------------- chain
 
@@ -213,7 +222,7 @@ for (const c of cases) {
   log(`entry ${c.entry} (${c.truth})`);
   for (let i = 0; i < 3; i++) {
     const model = JUDGES[i];
-    const completion = await chat(model, judgePrompt(c), 1200);
+    const completion = await chat(model, judgePrompt(c));
     const verdict = parseVerdict(completion.text);
     const record = { entry: c.entry, verifier: id(`verifier-${i + 1}`), model, verdict, raw_answer: verdict ? undefined : completion.text.slice(0, 300) };
     if (!verdict) {

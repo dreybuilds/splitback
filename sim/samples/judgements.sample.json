@@ -1,0 +1,197 @@
+{
+  "writer_model": "z-ai/glm-5.3-flash",
+  "briefs": {
+    "honest": "The NEAR-USDC order-book replay (seed 2026-11-12) processed 400000 events and printed 253072 fills on total volume of 4034017. Prices are quoted in ticks. The volume-weighted average price came in at 2062 ticks, matching the best bid of 2062, while the best ask sat at 2063, leaving a one-tick spread at the top of the book. That alignment of VWAP with the bid suggests execution clustered at or near the inside bid through the replay. The tape is hashed at 857be96f98506ba13c5a63c04783d7e76118bf8f4fafada812bae76c60b3f540 for verification against the source feed. Treat these as replay statistics rather than live quotes, since the run reflects the seeded event sequence only.",
+    "tampered": "Replay of the NEAR-USDC order book (seed 2026-11-13) processed 400000 events and printed 405058 fills on total volume of 8492908. Fills outnumbering events is consistent with single executions matching multiple resting orders. Volume-weighted average price across the tape was 2071 ticks, sitting above the final book, where best bid is 2035 and best ask is 2045, a 10-tick spread. That gap between VWAP and the closing touch suggests heavier trading at higher price levels earlier in the replay, with the book ending below the average print. Tape integrity can be verified against the SHA-256 hash: 5d2bd705f750a52b1b534c073ad5380cf430d771176591aa9f7f00c8282f0b28. All prices are quoted in ticks as specified in the replay spec."
+  },
+  "reference": {
+    "orderbook-replay:market=NEAR-USDC;seed=2026-11-12;events=400000": {
+      "spec": "orderbook-replay:market=NEAR-USDC;seed=2026-11-12;events=400000",
+      "fills": 253072,
+      "volume": 4034017,
+      "vwap_ticks": 2062,
+      "best_bid": 2062,
+      "best_ask": 2063,
+      "tape_sha256": "857be96f98506ba13c5a63c04783d7e76118bf8f4fafada812bae76c60b3f540"
+    },
+    "orderbook-replay:market=NEAR-USDC;seed=2026-11-13;events=400000": {
+      "spec": "orderbook-replay:market=NEAR-USDC;seed=2026-11-13;events=400000",
+      "fills": 253161,
+      "volume": 4044242,
+      "vwap_ticks": 2034,
+      "best_bid": 2035,
+      "best_ask": 2045,
+      "tape_sha256": "5d2bd705f750a52b1b534c073ad5380cf430d771176591aa9f7f00c8282f0b28"
+    }
+  },
+  "judgements": [
+    {
+      "entry": 0,
+      "verifier": "verifier-1.judge.sandbox",
+      "model": "Qwen/Qwen3.8-27B",
+      "verdict": {
+        "faithful": false,
+        "reason": "The brief adds a one-tick spread figure that is not present in the reference, even though it is derivable from the best bid and best ask."
+      },
+      "vote": "uphold",
+      "vote_tx": "8jXjKCvhkpKCFh2fUdQKxcBVzayHTeR6gMpRjVyrJ5X",
+      "near_ai": {
+        "model": "Qwen/Qwen3.8-27B",
+        "completion_id": "40a7b339d55345feb25fdb7e561e05a0",
+        "request_sha256": "42d9f3f2c9ca91cbca4ac5d549185ed387d4b1f12d756e50d7b7acda7ad18eba",
+        "response_sha256": "bf0cd3a6fab9bddc8376cb07eef76c402419d2d59de22412f38a4993b6598e62",
+        "signed": true,
+        "signature_kind": "provider_tee",
+        "signing_address": "0x835ab53d20294ef795906dff21ae4c045336aa26",
+        "signature": "0x1e426e84b71052eace4fa1ba8051e01606849d58f8f83a4bf0895a47de410a9601f5152783833b790a1623af7fbac41809ac536fdf5cdea9e9271f1bfcdc38811b",
+        "covers_this_request_and_response": true,
+        "signer_recovered_matches": true
+      }
+    },
+    {
+      "entry": 0,
+      "verifier": "verifier-2.judge.sandbox",
+      "model": "z-ai/glm-5.3-flash",
+      "verdict": {
+        "faithful": true,
+        "reason": "All figures in the brief (400000 events, 253072 fills, volume 4034017, VWAP 2062, best bid 2062, best ask 2063, tape SHA-256) match the reference exactly, and no extraneous figures are stated."
+      },
+      "vote": "reject",
+      "vote_tx": "A9LVJrBcFdJ13jNSLs9QBAFCMnjx4WGReXUV1ojdohPf",
+      "near_ai": {
+        "model": "z-ai/glm-5.3-flash",
+        "completion_id": "2ff7ad91acab4add85aa07241f6126bf",
+        "request_sha256": "d387f28230c60936a58eb39c1217b5a4b35f34288e92522e6bdbfd405dca6291",
+        "response_sha256": "e17d1f874c31f38b11ff04622373a9908f4efda10b4421648377b8f259105401",
+        "signed": true,
+        "signature_kind": "provider_tee",
+        "signing_address": "0x3b753b4406613c5e70ae640508632b600424fa0c",
+        "signature": "0x2cd3ed8ef563e1b5d0bd192f95ee08de65b2e09c29064d25b1e817f9194a8e4c4c635e13cff5900fbf0f1375f33616064152252929030d1f4a479823061bfbf31c",
+        "covers_this_request_and_response": true,
+        "signer_recovered_matches": true
+      }
+    },
+    {
+      "entry": 0,
+      "verifier": "verifier-3.judge.sandbox",
+      "model": "Qwen/Qwen3.6-35B-A3B-FP8",
+      "verdict": {
+        "faithful": true,
+        "reason": "All figures stated in the brief exactly match the corresponding values in the reference."
+      },
+      "vote": "reject",
+      "vote_tx": "8JUQPukwtYGfPquMCCQu9tMe6oRogr1GbnrxJbsYZnCD",
+      "near_ai": {
+        "model": "Qwen/Qwen3.6-35B-A3B-FP8",
+        "completion_id": "9330bb01eacc43bebdf170a305988ac6",
+        "request_sha256": "af3b11d30164e0520502c21f815cc958c5a7677c6e01a752949535545627eaa8",
+        "response_sha256": "28c46b4c5991bc17ad1eaf599c45827485b9921838538669b3ca47340ee69bd6",
+        "signed": true,
+        "signature_kind": "provider_tee",
+        "signing_address": "0xfdbd7952498b333206f360d71d97a1e0961e8ddf",
+        "signature": "0x708cc46fa27a9bbf27da4d815499c83c8dc2ac350ff50a44e445a731418f4dfc23931bbc0220e44497330a414d2d7d911de50fa1fe9fbef98d50ddd98adce92c1b",
+        "covers_this_request_and_response": true,
+        "signer_recovered_matches": true
+      }
+    },
+    {
+      "entry": 1,
+      "verifier": "verifier-1.judge.sandbox",
+      "model": "Qwen/Qwen3.8-27B",
+      "verdict": {
+        "faithful": false,
+        "reason": "The brief's fills, volume, and VWAP figures do not match the reference values."
+      },
+      "vote": "uphold",
+      "vote_tx": "42Z3t1QkZrEBLzLHfAu8NEvVtqGUDWpJTKe7X2bWxpZ4",
+      "near_ai": {
+        "model": "Qwen/Qwen3.8-27B",
+        "completion_id": "69dd016805c144118ed74703e1a12b7d",
+        "request_sha256": "e0b8a1bc312d4c2419675dd0e2b4cb3c273e6b667609e9526c01fc09e2a70191",
+        "response_sha256": "dc4c06f477797685396aa234fcf2ee6ac34d01e7b82a523aacf2747d9417db19",
+        "signed": true,
+        "signature_kind": "provider_tee",
+        "signing_address": "0x835ab53d20294ef795906dff21ae4c045336aa26",
+        "signature": "0x9aec4444d59f91f768f5369447a1f46e16ef23e9f7a73962f92e1d54d9793c60297dade1c9c12f163db0d52fb722fc1cbc4e4bf1c1de7d8c3ced7ee0073fd1ff1b",
+        "covers_this_request_and_response": true,
+        "signer_recovered_matches": true
+      }
+    },
+    {
+      "entry": 1,
+      "verifier": "verifier-2.judge.sandbox",
+      "model": "z-ai/glm-5.3-flash",
+      "verdict": {
+        "faithful": false,
+        "reason": "The brief's fills (405058 vs 253161), volume (8492908 vs 4044242), and VWAP (2071 vs 2034) all contradict the reference figures, even though the event count, best bid/ask, spread, and hash match."
+      },
+      "vote": "uphold",
+      "vote_tx": "FY6mMYF2gW93hovvgPKwFsFdQ6TvmQ9rjbwS6Y3Hey7o",
+      "near_ai": {
+        "model": "z-ai/glm-5.3-flash",
+        "completion_id": "c63d1bb54b374f08adea902815f26550",
+        "request_sha256": "c537f974324160a8c25e4a553c8fc8a31d2f20efd1b22c3616c27f595bd8c509",
+        "response_sha256": "9bee11c87c61f9e1bc3c04230868e2540f228e30289c0d9065d93ff1b86c507b",
+        "signed": true,
+        "signature_kind": "provider_tee",
+        "signing_address": "0x3b753b4406613c5e70ae640508632b600424fa0c",
+        "signature": "0x0595b258730b3fb6f4c0998a6956ffb87c9ad95f9a8685c5df2c80023a7e0f7c71c96bd20088df37a750aedf00d7629365230513e1b5572dd699e3180f3b21b51b",
+        "covers_this_request_and_response": true,
+        "signer_recovered_matches": true
+      }
+    }
+  ],
+  "entries": [
+    {
+      "id": 0,
+      "task_key": "81263e54add2a8125872c505ef1bbe244cce76f6db9eb85e0612ba0af2350a7a",
+      "spec": "brief:orderbook-replay:market=NEAR-USDC;seed=2026-11-12;events=400000",
+      "result_hash": "89a11338cfd98c55826c707b34fda47763b4c5a8931aef79a6c4f1293a9b602f",
+      "cost": "1500000",
+      "publisher": "seller-honest.judge.sandbox",
+      "provider": null,
+      "holders": 2,
+      "status": "Open",
+      "challenger": null,
+      "votes_uphold": [],
+      "votes_reject": [],
+      "bond": "3000000",
+      "paid_in": "750000",
+      "rebated": "0",
+      "current_share": "750000",
+      "next_price": "500000",
+      "created_at": "1794638213705887000",
+      "last_activity": "1794638257293524000"
+    },
+    {
+      "id": 1,
+      "task_key": "e0bcdc0dd7683bb5d425f36f91f18233c8a1b5f118cfb917b06a5a83705643ea",
+      "spec": "brief:orderbook-replay:market=NEAR-USDC;seed=2026-11-13;events=400000",
+      "result_hash": "58f53fd9f9422e4ea84b6b99f6da31e0ca3fb59ce79e708cff6c652d53cc886a",
+      "cost": "1500000",
+      "publisher": "seller-tampered.judge.sandbox",
+      "provider": null,
+      "holders": 2,
+      "status": "Voided",
+      "challenger": null,
+      "votes_uphold": [],
+      "votes_reject": [],
+      "bond": "0",
+      "paid_in": "750000",
+      "rebated": "750000",
+      "current_share": "750000",
+      "next_price": "500000",
+      "created_at": "1794638214058195000",
+      "last_activity": "1794638214814390000"
+    }
+  ],
+  "balances": {
+    "seller-honest": "2135000",
+    "seller-tampered": "2000000",
+    "buyer": "6950000",
+    "griefer": "4850000",
+    "verifier-1": "150000",
+    "verifier-2": "157500",
+    "verifier-3": "7500"
+  }
+}
