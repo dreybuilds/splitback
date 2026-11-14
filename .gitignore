@@ -1,0 +1,10 @@
+target/
+node_modules/
+.near-credentials/
+.env
+.env.*
+*.key.json
+keys/
+sim/.sandbox/
+.DS_Store
+sim/out/
