@@ -1,4 +1,4 @@
-// Scripted market: 5 sellers, 20 buyers, 1 verifier. No LLM calls.
+// Scripted market: 5 sellers, 20 buyers, 3 verifiers. No LLM calls.
 //
 //   node run.mjs            local sandbox (downloads a NEAR node binary on first run)
 //   node run.mjs --testnet  NEAR testnet, needs keys/testnet.json (see README)
@@ -60,7 +60,7 @@ async function main() {
   const root = `${tag}.${net.parentId}`;
   const SH = `splitback.${root}`;
   const USDC = `usdc.${root}`;
-  const VERIFIER = `verifier.${root}`;
+  const VERIFIERS = [1, 2, 3].map((i) => `verifier-${i}.${root}`);
   const v = (method, args) => view(rpcUrl, SH, method, args);
 
   log(`network ${net.name}, swarm parent ${root}`);
@@ -69,7 +69,7 @@ async function main() {
   await createAccount(human(root), USDC, net.nearContract.usdc, [humanPk]);
   await deploy(human(USDC), readFileSync(join(WASM, "mock_usdc.wasm")), "new", {});
   await deploy(human(SH), readFileSync(join(WASM, "splitback.wasm")), "new", {
-    token: USDC, verifier: VERIFIER, challenge_window_ns: WINDOW_NS.toString(),
+    token: USDC, verifiers: VERIFIERS, threshold: 2, challenge_window_ns: WINDOW_NS.toString(),
   });
   log(`contracts deployed: ${SH}, ${USDC}`);
 
@@ -77,7 +77,7 @@ async function main() {
   // process only ever gets a function-call key limited to the Splitback contract.
   const agents = {};
   const names = [
-    "verifier",
+    "verifier-1", "verifier-2", "verifier-3",
     ...Array.from({ length: N_SELLERS }, (_, i) => `seller-${i + 1}`),
     ...Array.from({ length: N_BUYERS }, (_, i) => `buyer-${i + 1}`),
   ];
@@ -88,7 +88,7 @@ async function main() {
       actions.createAccount(),
       actions.transfer(net.nearAgent),
       actions.addFullAccessKey(humanPk),
-      actions.addFunctionCallAccessKey(key.publicKey, SH, name === "verifier" ? ["resolve"] : AGENT_METHODS),
+      actions.addFunctionCallAccessKey(key.publicKey, SH, name.startsWith("verifier") ? ["vote", "withdraw"] : AGENT_METHODS),
     ]);
     agents[name] = { name, id, acct: account(rpcUrl, id, key.secret) };
   }
@@ -97,7 +97,7 @@ async function main() {
   // The human funds each agent's prepaid balance: mint test tokens, then ft_transfer_call.
   const budget = (name) => (name.startsWith("seller") ? 10_000_000n : 4_000_000n);
   const funded = {};
-  await each(names.filter((n) => n !== "verifier"), async (name) => {
+  await each(names.filter((n) => !n.startsWith("verifier")), async (name) => {
     const a = agents[name];
     funded[name] = budget(name);
     await send(human(a.id), USDC, [
@@ -119,6 +119,7 @@ async function main() {
     (await v("is_holder", { entry_id: entryId, account_id: who })) ? store.get(resultHash) : undefined;
 
   const receipts = [];
+  const grief = [];
   let caughtBy = null;
   const holdings = []; // { name, entry }
   const events = [];
@@ -180,9 +181,15 @@ async function main() {
     // Cheapest next price wins. Never pay more than computing alone would cost.
     open.sort((a, b) => Number(BigInt(a.next_price) - BigInt(b.next_price)));
     const e = open[0];
-    const { value: price, txHash } = await call(buyer.agent.acct, SH, "join", {
-      entry_id: e.id, max_price: task.cost.toString(),
-    });
+    let joined;
+    try {
+      joined = await call(buyer.agent.acct, SH, "join", { entry_id: e.id, max_price: task.cost.toString() });
+    } catch (err) {
+      // The entry was challenged or retired between the quote and the join.
+      if (!err.contractFailure) throw err;
+      return false;
+    }
+    const { value: price, txHash } = joined;
     holdings.push({ name: buyer.agent.name, entry: e.id });
     const bytes = await serve(e.id, e.result_hash, buyer.agent.id);
     const hashOk = bytes !== undefined && sha256hex(bytes) === e.result_hash;
@@ -205,19 +212,37 @@ async function main() {
       }
     } else if (buyer.strategy === "griefer" && !buyer.griefed) {
       buyer.griefed = true;
-      await call(buyer.agent.acct, SH, "challenge", { entry_id: e.id, reason: "frivolous" });
-      note(round, `${buyer.agent.name} filed a frivolous challenge against entry ${e.id}`);
+      grief.push({ buyer, entry: e.id }); // filed after the round's purchases
     }
     return true;
   }
 
+  // Three verifiers, two votes decide. verifier-1 and verifier-2 recompute the
+  // task. verifier-3 is lazy: it never recomputes and always sides with the
+  // publisher, so it is outvoted and unpaid whenever a result really is wrong.
   async function verify(round) {
+    for (const g of grief.splice(0)) {
+      try {
+        await call(g.buyer.agent.acct, SH, "challenge", { entry_id: g.entry, reason: "frivolous" });
+        note(round, `${g.buyer.agent.name} filed a frivolous challenge against entry ${g.entry}`);
+      } catch (err) {
+        if (!err.contractFailure) throw err;
+      }
+    }
     const all = await v("get_entries", { from_index: 0, limit: 100 });
     for (const e of all.filter((x) => x.status === "Challenged")) {
       const bytes = store.get(e.result_hash);
-      const upheld = bytes === undefined || bytes !== compute(e.spec);
-      await call(agents.verifier.acct, SH, "resolve", { entry_id: e.id, upheld });
-      note(round, `verifier recomputed entry ${e.id}: challenge ${upheld ? "UPHELD, entry void, bond slashed" : "rejected, stake goes to publisher"}`);
+      const wrong = bytes === undefined || bytes !== compute(e.spec);
+      const ballots = [["verifier-3", false], ["verifier-1", wrong], ["verifier-2", wrong]];
+      const cast = [];
+      for (const [name, upheld] of ballots) {
+        const { value } = await call(agents[name].acct, SH, "vote", { entry_id: e.id, upheld });
+        cast.push(`${name} ${upheld ? "uphold" : "reject"}`);
+        if (value !== null && value !== undefined) {
+          note(round, `verifiers voted on entry ${e.id} (${cast.join(", ")}): challenge ${value ? "UPHELD, entry void, bond slashed" : "rejected, stake forfeited"}`);
+          break;
+        }
+      }
     }
   }
 
@@ -309,7 +334,7 @@ async function main() {
     network: net.name,
     contract: SH,
     token: USDC,
-    agents: { buyers: N_BUYERS, sellers: N_SELLERS, verifier: 1 },
+    agents: { buyers: N_BUYERS, sellers: N_SELLERS, verifiers: 3, votes_needed: 2 },
     entries: entries.map((e) => ({
       id: e.id, spec: e.spec, publisher: e.publisher, status: e.status,
       cost: e.cost, holders: e.holders, each_paid_net: e.current_share,
@@ -321,6 +346,7 @@ async function main() {
     rounding_dust_left_in_contract_micro_usdc: dust.toString(),
     poisoner_seller_5_balance: { start: funded["seller-5"].toString(), end: poisoner.toString() },
     challenger: caughtBy,
+    verifier_earnings: Object.fromEntries([1, 2, 3].map((i) => [`verifier-${i}`, balances[`verifier-${i}`].toString()])),
     challenger_balance: { start: funded[caughtBy].toString(), end: challenger.toString() },
     rpc_url: TESTNET ? rpcUrl : null,
     explorer_tx_url: TESTNET ? "https://testnet.nearblocks.io/txns/" : null,
@@ -349,6 +375,7 @@ async function main() {
   log(`what they paid through Splitback:  ${usd(together)}  (${saving}% less)`);
   log(`seller-5 published a wrong result: balance ${usd(funded["seller-5"])} -> ${usd(poisoner)}`);
   log(`${caughtBy} caught it:${" ".repeat(Math.max(1, 25 - caughtBy.length))}balance ${usd(funded[caughtBy])} -> ${usd(challenger)} after its own purchases`);
+  log(`verifier earnings: ${[1, 2, 3].map((i) => `verifier-${i} ${usd(balances[`verifier-${i}`])}`).join(", ")}`);
   log(`rounding dust left in contract: ${dust} micro-USDC (bound ${dustBound})`);
 
   if (TESTNET) {

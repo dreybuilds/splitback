@@ -5,6 +5,13 @@
 //   node intents/quote.mjs --live --near-account you.near --refund 0xYourBaseAddress [--amount 1.00]
 //       asks for a real deposit address for "USDC on Base -> USDC on NEAR", then
 //       polls until the swap settles. You send the USDC from your own wallet.
+//   add --into-contract splitback.you.near --agent buyer-1.you.near
+//       to have 1Click deliver with ft_transfer_call straight into a Splitback
+//       contract, credited to that agent's prepaid balance in one step. This uses
+//       the 1Click field `customRecipientMsg`, which the docs mark as highly
+//       experimental: the contract must be a mainnet deployment whose token is
+//       real USDC, and it must be storage-registered on the USDC contract first,
+//       or the funds can be lost.
 //
 // No API key is needed for quotes and status. See docs.near-intents.org.
 const API = "https://1click.chaindefuser.com";
@@ -21,6 +28,8 @@ const nearAccount = arg("--near-account", "dreybuilds.near");
 const randomAddress = "0x" + [...crypto.getRandomValues(new Uint8Array(20))].map((b) => b.toString(16).padStart(2, "0")).join("");
 const refund = arg("--refund", randomAddress);
 const amount = BigInt(Math.round(Number(arg("--amount", "1.00")) * 1e6));
+const intoContract = arg("--into-contract", null);
+const agent = arg("--agent", nearAccount);
 
 async function quote(body) {
   const res = await fetch(`${API}/v0/quote`, {
@@ -44,8 +53,10 @@ const topUp = (dry) => ({
   amount: amount.toString(),
   refundTo: refund,
   refundType: "ORIGIN_CHAIN",
-  recipient: nearAccount,
+  recipient: intoContract ?? nearAccount,
   recipientType: "DESTINATION_CHAIN",
+  // Splitback's ft_on_transfer credits the account named in the message.
+  ...(intoContract ? { customRecipientMsg: agent } : {}),
   deadline,
 });
 const cashOut = {
@@ -70,7 +81,8 @@ const show = (label, q) => {
 };
 
 if (!LIVE) {
-  show(`top-up: ${Number(amount) / 1e6} USDC on Base -> USDC on NEAR for ${nearAccount} (dry)`, await quote(topUp(true)));
+  const target = intoContract ? `${intoContract}, credited to ${agent}` : nearAccount;
+  show(`top-up: ${Number(amount) / 1e6} USDC on Base -> USDC on NEAR for ${target} (dry)`, await quote(topUp(true)));
   show(`cash-out: ${Number(amount) / 1e6} USDC on NEAR -> USDC on Base (dry)`, await quote(cashOut));
   console.log("\nDry quotes only. Nothing was sent.");
   process.exit(0);

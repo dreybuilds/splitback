@@ -15,9 +15,10 @@ export async function network(testnet) {
       rpcUrl: cfg.rpcUrl ?? "https://test.rpc.fastnear.com",
       parentId: cfg.accountId,
       humanKey: cfg.privateKey,
-      nearRoot: 9n * NEAR + NEAR / 2n,
-      nearContract: { splitback: 5n * NEAR, usdc: 3n * NEAR },
-      nearAgent: NEAR / 25n,
+      // Testnet gas is prepaid per call, so each agent needs headroom. See README for funding.
+      nearRoot: BigInt(cfg.rootNear ?? 27) * NEAR,
+      nearContract: { splitback: 5n * NEAR + NEAR / 2n, usdc: 3n * NEAR + NEAR / 2n },
+      nearAgent: (NEAR * 45n) / 100n,
       stop: async () => {},
     };
   }

@@ -19,7 +19,20 @@ fn as_caller(who: &str, ts: u64) {
 
 fn setup() -> Splitback {
     as_caller("owner.test", 0);
-    Splitback::new(acc("usdc.test"), acc("verifier.test"), U64(WINDOW))
+    Splitback::new(
+        acc("usdc.test"),
+        vec![acc("v1.test"), acc("v2.test"), acc("v3.test")],
+        2,
+        U64(WINDOW),
+    )
+}
+
+/// Two of the three verifiers vote the same way, which decides it.
+fn decide(c: &mut Splitback, id: u32, upheld: bool, ts: u64) {
+    as_caller("v1.test", ts);
+    assert_eq!(c.vote(id, upheld), None);
+    as_caller("v2.test", ts);
+    assert_eq!(c.vote(id, upheld), Some(upheld));
 }
 
 fn fund(c: &mut Splitback, who: &str, amount: u128) {
@@ -162,24 +175,30 @@ fn upheld_challenge_refunds_buyers_and_pays_challenger_from_bond() {
     assert_eq!(bal(&c, "b2.test"), 1000 - 300 - 90);
 
     // Joins are blocked while challenged.
-    as_caller("verifier.test", 7);
-    c.resolve(id, true);
+    decide(&mut c, id, true, 7);
     let e = c.get_entry(id).unwrap();
     assert_eq!(e.status, Status::Voided);
 
-    // Challenger: stake back + bond minus what the publisher already took.
-    assert_eq!(bal(&c, "b2.test"), 1000 - 300 + (1800 - 600));
+    // Forfeit = bond minus what the publisher already took = 1200. The two
+    // verifiers who voted to uphold get 60 each; the challenger gets the rest.
+    assert_eq!(bal(&c, "v1.test"), 60);
+    assert_eq!(bal(&c, "v2.test"), 60);
+    assert_eq!(bal(&c, "v3.test"), 0);
+    assert_eq!(bal(&c, "b2.test"), 1000 - 300 + 1080);
     as_caller("b2.test", 8);
     assert_eq!(c.claim(id).0, 300);
     as_caller("b1.test", 8);
     assert_eq!(c.claim(id).0, 300);
     assert_eq!(bal(&c, "b1.test"), 1000, "b1 made whole");
-    assert_eq!(bal(&c, "b2.test"), 1000 + 1200, "b2 made whole plus reward");
+    assert_eq!(bal(&c, "b2.test"), 1000 + 1080, "b2 made whole plus reward");
 
     as_caller("p.test", 9);
     assert_eq!(c.claim(id).0, 0, "publisher gets nothing more");
     // Money is conserved: 1800 + 1000 + 1000 went in.
-    assert_eq!(bal(&c, "p.test") + bal(&c, "b1.test") + bal(&c, "b2.test"), 3800);
+    assert_eq!(
+        bal(&c, "p.test") + bal(&c, "b1.test") + bal(&c, "b2.test") + bal(&c, "v1.test") + bal(&c, "v2.test"),
+        3800
+    );
     // The publisher claimed 600 in rebates and lost a bond of 1800: worse off than the full cost.
     assert_eq!(bal(&c, "p.test"), 600);
 }
@@ -193,9 +212,10 @@ fn rejected_challenge_pays_stake_to_publisher_and_reopens() {
     let id = c.publish(KEY.into(), "ok".into(), HASH.into(), U128(1000), None);
     as_caller("x.test", 3);
     c.challenge(id, "i think it is wrong".into());
-    as_caller("verifier.test", 4);
-    c.resolve(id, false);
-    assert_eq!(bal(&c, "p.test"), 100);
+    decide(&mut c, id, false, 4);
+    // Stake of 100: the two rejecting verifiers get 5 each, the publisher gets 90.
+    assert_eq!(bal(&c, "p.test"), 90);
+    assert_eq!(bal(&c, "v1.test"), 5);
     assert_eq!(bal(&c, "x.test"), 900);
     assert_eq!(c.get_entry(id).unwrap().status, Status::Open);
     as_caller("x.test", 5);
@@ -277,8 +297,8 @@ fn cannot_join_a_challenged_entry() {
 }
 
 #[test]
-#[should_panic(expected = "only the verifier resolves")]
-fn only_verifier_resolves() {
+#[should_panic(expected = "only a verifier votes")]
+fn only_verifiers_vote() {
     let mut c = setup();
     fund(&mut c, "p.test", 1000);
     fund(&mut c, "x.test", 500);
@@ -286,7 +306,7 @@ fn only_verifier_resolves() {
     let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None);
     as_caller("x.test", 3);
     c.challenge(id, "".into());
-    c.resolve(id, true);
+    c.vote(id, true);
 }
 
 #[test]
@@ -349,4 +369,79 @@ fn cannot_name_yourself_as_provider() {
     fund(&mut c, "a.test", 36);
     as_caller("a.test", 2);
     c.publish(KEY.into(), "t".into(), HASH.into(), U128(12), Some(acc("a.test")));
+}
+
+#[test]
+fn one_dissenting_verifier_is_outvoted_and_unpaid() {
+    let mut c = setup();
+    fund(&mut c, "p.test", 2000);
+    fund(&mut c, "x.test", 1000);
+    as_caller("p.test", 2);
+    let id = c.publish(KEY.into(), "bad".into(), HASH.into(), U128(1000), None);
+    as_caller("x.test", 3);
+    c.challenge(id, "wrong".into());
+    as_caller("v3.test", 4);
+    assert_eq!(c.vote(id, false), None, "the dissenter votes first");
+    as_caller("v1.test", 4);
+    assert_eq!(c.vote(id, true), None);
+    as_caller("v2.test", 4);
+    assert_eq!(c.vote(id, true), Some(true));
+    assert_eq!(c.get_entry(id).unwrap().status, Status::Voided);
+    assert_eq!(bal(&c, "v3.test"), 0);
+    assert_eq!(bal(&c, "v1.test"), 100); // forfeit 2000, a tenth split two ways
+}
+
+#[test]
+#[should_panic(expected = "already voted")]
+fn a_verifier_votes_once_per_challenge() {
+    let mut c = setup();
+    fund(&mut c, "p.test", 1000);
+    fund(&mut c, "x.test", 1000);
+    as_caller("p.test", 2);
+    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None);
+    as_caller("x.test", 3);
+    c.challenge(id, "".into());
+    as_caller("v1.test", 4);
+    c.vote(id, true);
+    c.vote(id, true);
+}
+
+#[test]
+fn undecided_challenge_lapses_after_the_window_and_nobody_is_punished() {
+    let mut c = setup();
+    fund(&mut c, "p.test", 1000);
+    fund(&mut c, "x.test", 1000);
+    as_caller("p.test", 2);
+    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None);
+    as_caller("x.test", 10);
+    c.challenge(id, "".into());
+    as_caller("v1.test", 11);
+    c.vote(id, true); // one vote is not enough
+    as_caller("anyone.test", 10 + WINDOW);
+    c.expire_challenge(id);
+    assert_eq!(c.get_entry(id).unwrap().status, Status::Open);
+    assert_eq!(bal(&c, "x.test"), 1000, "stake returned");
+    assert_eq!(bal(&c, "p.test"), 0, "bond still locked, nothing gained");
+    assert_eq!(bal(&c, "v1.test"), 0);
+}
+
+#[test]
+#[should_panic(expected = "verifiers still have time to vote")]
+fn challenge_cannot_be_lapsed_early() {
+    let mut c = setup();
+    fund(&mut c, "p.test", 1000);
+    fund(&mut c, "x.test", 1000);
+    as_caller("p.test", 2);
+    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None);
+    as_caller("x.test", 10);
+    c.challenge(id, "".into());
+    as_caller("anyone.test", 10 + WINDOW - 1);
+    c.expire_challenge(id);
+}
+
+#[test]
+#[should_panic(expected = "threshold must be a strict majority")]
+fn threshold_must_be_a_majority() {
+    as_caller("owner.test", 0);
+    Splitback::new(acc("usdc.test"), vec![acc("v1.test"), acc("v2.test"), acc("v3.test"), acc("v4.test")], 2, U64(WINDOW));
 }

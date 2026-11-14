@@ -30,12 +30,12 @@ const SB = `splitback.${root}`;
 const USDC = `usdc.${root}`;
 const v = (method, args) => view(rpcUrl, SB, method, args);
 
-await createAccount(human(net.parentId), root, TESTNET ? 9n * 10n ** 24n : net.nearRoot, [humanPk]);
+await createAccount(human(net.parentId), root, TESTNET ? 12n * 10n ** 24n : net.nearRoot, [humanPk]);
 await createAccount(human(root), SB, net.nearContract.splitback, [humanPk]);
 await createAccount(human(root), USDC, net.nearContract.usdc, [humanPk]);
 await deploy(human(USDC), readFileSync(join(WASM, "mock_usdc.wasm")), "new", {});
 await deploy(human(SB), readFileSync(join(WASM, "splitback.wasm")), "new", {
-  token: USDC, verifier: `verifier.${root}`, challenge_window_ns: "5000000000",
+  token: USDC, verifiers: [`verifier.${root}`], threshold: 1, challenge_window_ns: "5000000000",
 });
 
 // replay-provider does the work. desk-a, desk-b and desk-c are trading agents

@@ -5,11 +5,13 @@
     "sim": "node run.mjs",
     "sim:testnet": "node run.mjs --testnet",
     "pitch": "node pitch.mjs",
-    "pitch:testnet": "node pitch.mjs --testnet"
+    "pitch:testnet": "node pitch.mjs --testnet",
+    "judge": "node judge.mjs"
   },
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "ethers": "^6.17.0",
     "near-api-js": "^7.5.3",
     "near-sandbox": "^0.3.5"
   }

@@ -20,6 +20,9 @@ const CHALLENGE_STAKE_DIVISOR: u128 = 10;
 /// The bond is cost * BOND_MULTIPLIER, so a publisher caught with a wrong result
 /// always loses more than the full cost, however many rebates it already claimed.
 const BOND_MULTIPLIER: u128 = 2;
+/// Share of the losing side's forfeit that goes to the verifiers who voted with
+/// the outcome, split equally.
+const VERIFIER_CUT_DIVISOR: u128 = 10;
 
 #[ext_contract(ext_ft)]
 pub trait FungibleToken {
@@ -59,6 +62,9 @@ pub struct Entry {
     status_before_challenge: Status,
     challenger: Option<AccountId>,
     challenge_stake: u128,
+    challenged_at: u64,
+    votes_uphold: Vec<AccountId>,
+    votes_reject: Vec<AccountId>,
     bond: u128,
     paid_in: u128,
     rebated: u128,
@@ -86,6 +92,8 @@ pub struct EntryView {
     pub holders: u32,
     pub status: Status,
     pub challenger: Option<AccountId>,
+    pub votes_uphold: Vec<AccountId>,
+    pub votes_reject: Vec<AccountId>,
     pub bond: U128,
     pub paid_in: U128,
     pub rebated: U128,
@@ -118,7 +126,8 @@ pub struct Stats {
 #[near(serializers = [json])]
 pub struct Config {
     pub token: AccountId,
-    pub verifier: AccountId,
+    pub verifiers: Vec<AccountId>,
+    pub threshold: u32,
     pub challenge_window_ns: U64,
     pub challenge_stake_divisor: u32,
     pub bond_multiplier: u32,
@@ -128,7 +137,8 @@ pub struct Config {
 #[derive(PanicOnDefault)]
 pub struct Splitback {
     token: AccountId,
-    verifier: AccountId,
+    verifiers: Vec<AccountId>,
+    threshold: u32,
     challenge_window_ns: u64,
     balances: LookupMap<AccountId, u128>,
     entries: Vector<Entry>,
@@ -162,10 +172,23 @@ fn emit(event: &str, data: near_sdk::serde_json::Value) {
 #[near]
 impl Splitback {
     #[init]
-    pub fn new(token: AccountId, verifier: AccountId, challenge_window_ns: U64) -> Self {
+    pub fn new(
+        token: AccountId,
+        verifiers: Vec<AccountId>,
+        threshold: u32,
+        challenge_window_ns: U64,
+    ) -> Self {
+        let n = verifiers.len() as u32;
+        require!(n >= 1, "at least one verifier");
+        // A strict majority, so the two outcomes can never both reach the threshold.
+        require!(threshold <= n && threshold * 2 > n, "threshold must be a strict majority");
+        for (i, v) in verifiers.iter().enumerate() {
+            require!(!verifiers[..i].contains(v), "duplicate verifier");
+        }
         Self {
             token,
-            verifier,
+            verifiers,
+            threshold,
             challenge_window_ns: challenge_window_ns.0,
             balances: LookupMap::new(StorageKey::Balances),
             entries: Vector::new(StorageKey::Entries),
@@ -243,6 +266,9 @@ impl Splitback {
             status_before_challenge: Status::Open,
             challenger: None,
             challenge_stake: 0,
+            challenged_at: 0,
+            votes_uphold: Vec::new(),
+            votes_reject: Vec::new(),
             bond,
             paid_in: 0,
             rebated: 0,
@@ -355,6 +381,9 @@ impl Splitback {
         entry.status = Status::Challenged;
         entry.challenger = Some(challenger.clone());
         entry.challenge_stake = stake;
+        entry.challenged_at = env::block_timestamp();
+        entry.votes_uphold.clear();
+        entry.votes_reject.clear();
         self.entries.replace(entry_id, entry);
         emit(
             "challenge",
@@ -364,45 +393,65 @@ impl Splitback {
         );
     }
 
-    /// Rule 8. Only the verifier.
-    pub fn resolve(&mut self, entry_id: u32, upheld: bool) {
-        require!(
-            env::predecessor_account_id() == self.verifier,
-            "only the verifier resolves"
-        );
+    /// Rule 8. One vote per verifier per challenge. The challenge is decided as
+    /// soon as either side reaches the threshold. Returns the outcome if this
+    /// vote decided it.
+    pub fn vote(&mut self, entry_id: u32, upheld: bool) -> Option<bool> {
+        let voter = env::predecessor_account_id();
+        require!(self.verifiers.contains(&voter), "only a verifier votes");
         let mut entry = self.entry(entry_id);
         require!(entry.status == Status::Challenged, "no pending challenge");
+        require!(
+            !entry.votes_uphold.contains(&voter) && !entry.votes_reject.contains(&voter),
+            "already voted"
+        );
+        if upheld {
+            entry.votes_uphold.push(voter.clone());
+        } else {
+            entry.votes_reject.push(voter.clone());
+        }
+        emit(
+            "vote",
+            near_sdk::serde_json::json!({ "entry": entry_id, "verifier": voter, "upheld": upheld }),
+        );
+        let outcome = if entry.votes_uphold.len() as u32 >= self.threshold {
+            Some(true)
+        } else if entry.votes_reject.len() as u32 >= self.threshold {
+            Some(false)
+        } else {
+            None
+        };
+        match outcome {
+            Some(o) => self.finalize(entry_id, entry, o),
+            None => {
+                self.entries.replace(entry_id, entry);
+            }
+        }
+        outcome
+    }
+
+    /// Rule 8b. If the verifiers have not decided within the challenge window,
+    /// anyone may lapse the challenge: the stake returns to the challenger and
+    /// the entry goes back to its previous state. Nobody is punished.
+    pub fn expire_challenge(&mut self, entry_id: u32) {
+        let mut entry = self.entry(entry_id);
+        require!(entry.status == Status::Challenged, "no pending challenge");
+        require!(
+            env::block_timestamp() >= entry.challenged_at + self.challenge_window_ns,
+            "verifiers still have time to vote"
+        );
         let challenger = entry.challenger.take().unwrap();
         let stake = entry.challenge_stake;
         entry.challenge_stake = 0;
-        let mut reward = 0u128;
-        if upheld {
-            // The publisher keeps what it already claimed; the bond covers exactly
-            // that hole in the buyers' pool, and the rest goes to the challenger.
-            let key = (entry_id, entry.publisher.clone());
-            let mut pub_holding = self.holdings.get(&key).cloned().unwrap();
-            let pub_claimed = pub_holding.claimed;
-            pub_holding.claimed = pub_holding.paid;
-            self.holdings.insert(key, pub_holding);
-            reward = entry.bond - pub_claimed;
-            entry.bond = 0;
-            entry.status = Status::Voided;
-            self.stats.voided += 1;
-            self.stats.slashed.0 += reward;
-            self.credit(&challenger, stake + reward);
-        } else {
-            entry.status = entry.status_before_challenge;
-            entry.last_activity = env::block_timestamp();
-            let publisher = entry.publisher.clone();
-            self.credit(&publisher, stake);
-        }
+        entry.votes_uphold.clear();
+        entry.votes_reject.clear();
+        entry.status = entry.status_before_challenge;
+        entry.last_activity = env::block_timestamp();
         self.entries.replace(entry_id, entry);
+        self.credit(&challenger, stake);
         emit(
-            "resolve",
-            near_sdk::serde_json::json!({
-                "entry": entry_id, "upheld": upheld, "challenger": challenger,
-                "stake": U128(stake), "reward": U128(reward)
-            }),
+            "challenge_expired",
+            near_sdk::serde_json::json!({ "entry": entry_id, "challenger": challenger, "stake": U128(stake) }),
         );
     }
 
@@ -486,7 +535,8 @@ impl Splitback {
     pub fn get_config(&self) -> Config {
         Config {
             token: self.token.clone(),
-            verifier: self.verifier.clone(),
+            verifiers: self.verifiers.clone(),
+            threshold: self.threshold,
             challenge_window_ns: U64(self.challenge_window_ns),
             challenge_stake_divisor: CHALLENGE_STAKE_DIVISOR as u32,
             bond_multiplier: BOND_MULTIPLIER as u32,
@@ -548,6 +598,57 @@ impl Splitback {
 }
 
 impl Splitback {
+    fn finalize(&mut self, entry_id: u32, mut entry: Entry, upheld: bool) {
+        let challenger = entry.challenger.take().unwrap();
+        let stake = entry.challenge_stake;
+        entry.challenge_stake = 0;
+        let winners = if upheld { entry.votes_uphold.clone() } else { entry.votes_reject.clone() };
+        entry.votes_uphold.clear();
+        entry.votes_reject.clear();
+        let mut reward = 0u128;
+        let forfeit;
+        if upheld {
+            // The publisher keeps what it already claimed; the bond covers exactly
+            // that hole in the buyers' pool, and the rest is forfeit.
+            let key = (entry_id, entry.publisher.clone());
+            let mut pub_holding = self.holdings.get(&key).cloned().unwrap();
+            let pub_claimed = pub_holding.claimed;
+            pub_holding.claimed = pub_holding.paid;
+            self.holdings.insert(key, pub_holding);
+            forfeit = entry.bond - pub_claimed;
+            entry.bond = 0;
+            entry.status = Status::Voided;
+            self.stats.voided += 1;
+            self.stats.slashed.0 += forfeit;
+        } else {
+            forfeit = stake;
+            entry.status = entry.status_before_challenge;
+            entry.last_activity = env::block_timestamp();
+        }
+        // Verifiers who voted with the outcome split a tenth of the forfeit.
+        let per_verifier = forfeit / VERIFIER_CUT_DIVISOR / winners.len() as u128;
+        for w in &winners {
+            self.credit(w, per_verifier);
+        }
+        let rest = forfeit - per_verifier * winners.len() as u128;
+        if upheld {
+            reward = rest;
+            self.credit(&challenger, stake + rest);
+        } else {
+            let publisher = entry.publisher.clone();
+            self.credit(&publisher, rest);
+        }
+        self.entries.replace(entry_id, entry);
+        emit(
+            "resolve",
+            near_sdk::serde_json::json!({
+                "entry": entry_id, "upheld": upheld, "challenger": challenger,
+                "stake": U128(stake), "reward": U128(reward),
+                "verifiers_paid": winners, "per_verifier": U128(per_verifier)
+            }),
+        );
+    }
+
     fn entry(&self, id: u32) -> Entry {
         self.entries
             .get(id)
@@ -594,6 +695,8 @@ impl Splitback {
             holders: e.holders,
             status: e.status,
             challenger: e.challenger.clone(),
+            votes_uphold: e.votes_uphold.clone(),
+            votes_reject: e.votes_reject.clone(),
             bond: U128(e.bond),
             paid_in: U128(e.paid_in),
             rebated: U128(e.rebated),
