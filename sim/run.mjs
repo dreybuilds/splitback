@@ -37,7 +37,7 @@ function mulberry32(seed) {
 const rand = mulberry32(20261114);
 const log = (...a) => console.log(...a);
 // Run fn over items with limited concurrency: public testnet RPCs rate-limit bursts.
-const LIMIT = TESTNET ? 3 : 25;
+const LIMIT = TESTNET ? 2 : 25;
 async function each(items, fn) {
   const queue = [...items.entries()];
   const out = new Array(items.length);
@@ -52,6 +52,11 @@ async function each(items, fn) {
 // -------------------------------------------------------------------- main
 
 async function main() {
+  // A run takes about 80 seconds locally. If something stalls, say so instead of hanging.
+  setTimeout(() => {
+    console.error("\nTIMED OUT after 15 minutes. Re-run; if it repeats, check that no other near-sandbox process is running.");
+    process.exit(3);
+  }, 15 * 60 * 1000).unref();
   const net = await network(TESTNET);
   const { rpcUrl } = net;
   const humanPk = publicKeyOf(net.humanKey);
@@ -95,7 +100,7 @@ async function main() {
   log(`${names.length} agent sub-accounts created, each with a function-call key for ${SH} only`);
 
   // The human funds each agent's prepaid balance: mint test tokens, then ft_transfer_call.
-  const budget = (name) => (name.startsWith("seller") ? 10_000_000n : 4_000_000n);
+  const budget = (name) => (name.startsWith("seller") ? 10_000_000n : 6_000_000n);
   const funded = {};
   await each(names.filter((n) => !n.startsWith("verifier")), async (name) => {
     const a = agents[name];
@@ -134,6 +139,8 @@ async function main() {
     log(`  ${text}`);
   };
 
+  // Every publisher charges a delivery fee of 1% of the cost per buyer for serving the bytes.
+  const feeFor = (cost) => cost / 100n;
   async function publish(agent, task, { cost = task.cost, poison = false, round = 0 } = {}) {
     let bytes = compute(task.spec);
     if (poison) bytes = bytes.replace(/[0-9]/, (d) => String((Number(d) + 1) % 10));
@@ -141,6 +148,7 @@ async function main() {
     store.set(hash, bytes);
     const { value, txHash } = await call(agent.acct, SH, "publish", {
       task_key: taskKey(task.spec), spec: task.spec, result_hash: hash, cost: cost.toString(), provider: null,
+      delivery_fee: feeFor(cost).toString(),
     });
     holdings.push({ name: agent.name, entry: value });
     note(round, `${agent.name} published entry ${value} "${task.spec}" at ${usd(cost)}${poison ? "  (wrong result)" : ""}`);
@@ -197,13 +205,15 @@ async function main() {
     }
     const { value: price, txHash } = joined;
     holdings.push({ name: buyer.agent.name, entry: e.id });
+    const fee = e.next_fee;
     const bytes = await serve(e.id, e.result_hash, buyer.agent.id);
     const hashOk = bytes !== undefined && sha256hex(bytes) === e.result_hash;
     let audit = "not audited";
     if (buyer.strategy === "auditor") audit = bytes === compute(task.spec) ? "recomputed, matches" : "recomputed, MISMATCH";
     receipts.push({
       round, buyer: buyer.agent.id, bought: task.spec, entry: e.id, from: e.publisher,
-      price_micro_usdc: price, alone_would_cost_micro_usdc: task.cost.toString(),
+      price_micro_usdc: price, of_which_delivery_fee_micro_usdc: fee,
+      alone_would_cost_micro_usdc: task.cost.toString(),
       hash_check_passed: hashOk, audit, tx: txHash,
     });
     if (audit.endsWith("MISMATCH")) {
@@ -272,11 +282,24 @@ async function main() {
     });
     // Nobody sells it: the first buyer computes and publishes, the rest join.
     for (const [b, task] of misses) {
-      if (!(await buy(b, task, round))) {
+      // Look again, more than once on a public network: another buyer may have just published it.
+      let bought = await buy(b, task, round);
+      for (let again = 0; !bought && TESTNET && again < 3; again++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        bought = await buy(b, task, round);
+      }
+      if (!bought) {
+        // Publishing locks a bond of three times the cost. An agent that cannot cover it goes without.
+        const have = BigInt(await v("balance_of", { account_id: b.agent.id }));
+        if (have < task.cost * 3n) {
+          note(round, `${b.agent.name} needed "${task.spec}", found no open entry and could not cover the bond to publish its own; it went without`);
+          continue;
+        }
         const { entry, txHash } = await publish(b.agent, task, { round });
         receipts.push({
           round, buyer: b.agent.id, bought: task.spec, entry, from: "computed it itself, then published",
-          price_micro_usdc: task.cost.toString(), alone_would_cost_micro_usdc: task.cost.toString(),
+          price_micro_usdc: task.cost.toString(), of_which_delivery_fee_micro_usdc: "0",
+          alone_would_cost_micro_usdc: task.cost.toString(),
           hash_check_passed: true, audit: "own work", tx: txHash,
         });
       }
@@ -300,6 +323,7 @@ async function main() {
   let alone = 0n;
   let together = 0n;
   let dustBound = 0n;
+  let feesPaid = 0n;
   let lockedBonds = 0n;
   for (const e of entries) lockedBonds += BigInt(e.bond);
   for (const h of holdings) {
@@ -307,7 +331,8 @@ async function main() {
     const hv = await v("get_holding", { entry_id: h.entry, account_id: agents[h.name].id });
     const net = BigInt(hv.paid) - BigInt(hv.claimed);
     if (e.status === "Voided") {
-      if (h.name !== agents[e.publisher.split(".")[0]]?.name && net !== 0n) {
+      // Refunds cover the share and the delivery fee.
+      if (h.name !== agents[e.publisher.split(".")[0]]?.name && net + BigInt(hv.fee_paid) !== 0n) {
         problems.push(`${h.name} not fully refunded on voided entry ${e.id}`);
       }
       continue;
@@ -316,7 +341,8 @@ async function main() {
       problems.push(`${h.name} net ${net} != share ${e.current_share} on entry ${e.id}`);
     }
     alone += BigInt(e.cost);
-    together += net;
+    together += net + BigInt(hv.fee_paid);
+    feesPaid += BigInt(hv.fee_paid);
   }
   for (const e of entries) if (e.status !== "Voided") dustBound += BigInt(e.holders);
 
@@ -344,17 +370,19 @@ async function main() {
     entries: entries.map((e) => ({
       id: e.id, spec: e.spec, publisher: e.publisher, status: e.status,
       cost: e.cost, holders: e.holders, each_paid_net: e.current_share,
+      delivery_fee: e.delivery_fee, fees_collected: e.fees_collected,
     })),
     stats,
     cost_if_every_agent_computed_alone_micro_usdc: alone.toString(),
     cost_actually_paid_micro_usdc: together.toString(),
+    of_which_delivery_fees_micro_usdc: feesPaid.toString(),
     saving_percent: saving,
     rounding_dust_left_in_contract_micro_usdc: dust.toString(),
     poisoner_seller_5_balance: { start: funded["seller-5"].toString(), end: poisoner.toString() },
     challenger: caughtBy,
     verifier_earnings: Object.fromEntries([1, 2, 3].map((i) => [`verifier-${i}`, balances[`verifier-${i}`].toString()])),
     challenger_balance: { start: funded[caughtBy].toString(), end: challenger.toString() },
-    rpc_url: TESTNET ? rpcUrl : null,
+    rpc_url: TESTNET ? rpcUrl.split(",")[0] : null,
     explorer_tx_url: TESTNET ? "https://testnet.nearblocks.io/txns/" : null,
     receipts,
     events,
@@ -378,14 +406,14 @@ async function main() {
   }
   log(`\nreceipts written: ${receipts.length} (sim/out/receipts.json)`);
   log(`if every agent had computed alone: ${usd(alone)}`);
-  log(`what they paid through Splitback:  ${usd(together)}  (${saving}% less)`);
+  log(`what they paid through Splitback:  ${usd(together)}  (${saving}% less), of which ${usd(feesPaid)} was delivery fees to publishers`);
   log(`seller-5 published a wrong result: balance ${usd(funded["seller-5"])} -> ${usd(poisoner)}`);
   log(`${caughtBy} caught it:${" ".repeat(Math.max(1, 25 - caughtBy.length))}balance ${usd(funded[caughtBy])} -> ${usd(challenger)} after its own purchases`);
   log(`verifier earnings: ${[1, 2, 3].map((i) => `verifier-${i} ${usd(balances[`verifier-${i}`])}`).join(", ")}`);
   log(`rounding dust left in contract: ${dust} micro-USDC (bound ${dustBound})`);
 
   if (TESTNET) {
-    const webCfg = { rpcUrl, contract: SH, token: USDC, network: "testnet" };
+    const webCfg = { rpcUrl: rpcUrl.split(",")[0], contract: SH, token: USDC, network: "testnet" };
     writeFileSync(join(HERE, "..", "web", "deployment.json"), JSON.stringify(webCfg, null, 2));
     log(`\nweb/deployment.json now points the live page at ${SH}`);
   } else if (process.argv.includes("--keep")) {
@@ -401,6 +429,7 @@ async function main() {
     process.exit(1);
   }
   log("\nALL CHECKS PASSED: every holder paid exactly ceil(cost / holders), refunds were complete, the contract is solvent.");
+  process.exit(0);
 }
 
 main().catch(async (e) => {

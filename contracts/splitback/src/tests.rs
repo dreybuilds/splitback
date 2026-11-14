@@ -61,7 +61,7 @@ fn the_worked_example_from_rules() {
     fund(&mut c, "b2.test", 1000);
 
     as_caller("p.test", 2);
-    let id = c.publish(KEY.into(), "demo".into(), HASH.into(), U128(900), None);
+    let id = c.publish(KEY.into(), "demo".into(), HASH.into(), U128(900), None, None);
     assert_eq!(bal(&c, "p.test"), 0, "bond locked");
     assert_eq!(c.quote(id).0, 450);
 
@@ -88,7 +88,7 @@ fn run_case(cost: u128, n: u32) {
     let mut c = setup();
     fund(&mut c, "p.test", 2 * cost);
     as_caller("p.test", 2);
-    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(cost), None);
+    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(cost), None, None);
     let mut paid_in = 0u128;
     for i in 0..n {
         let who = format!("b{i}.test");
@@ -159,7 +159,7 @@ fn upheld_challenge_refunds_buyers_and_pays_challenger_from_bond() {
         fund(&mut c, b, 1000);
     }
     as_caller("p.test", 2);
-    let id = c.publish(KEY.into(), "poison".into(), HASH.into(), U128(900), None);
+    let id = c.publish(KEY.into(), "poison".into(), HASH.into(), U128(900), None, None);
     as_caller("b1.test", 3);
     c.join(id, None);
     as_caller("b2.test", 4);
@@ -209,7 +209,7 @@ fn rejected_challenge_pays_stake_to_publisher_and_reopens() {
     fund(&mut c, "p.test", 2000);
     fund(&mut c, "x.test", 1000);
     as_caller("p.test", 2);
-    let id = c.publish(KEY.into(), "ok".into(), HASH.into(), U128(1000), None);
+    let id = c.publish(KEY.into(), "ok".into(), HASH.into(), U128(1000), None, None);
     as_caller("x.test", 3);
     c.challenge(id, "i think it is wrong".into());
     decide(&mut c, id, false, 4);
@@ -227,7 +227,7 @@ fn bond_is_released_only_after_retire_and_window() {
     let mut c = setup();
     fund(&mut c, "p.test", 1000);
     as_caller("p.test", 10);
-    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None);
+    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None, None);
     c.retire(id);
     as_caller("p.test", 10 + WINDOW);
     assert_eq!(c.release_bond(id).0, 1000);
@@ -241,7 +241,7 @@ fn bond_cannot_be_released_early() {
     let mut c = setup();
     fund(&mut c, "p.test", 1000);
     as_caller("p.test", 10);
-    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None);
+    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None, None);
     c.retire(id);
     as_caller("p.test", 10 + WINDOW - 1);
     c.release_bond(id);
@@ -253,7 +253,7 @@ fn cannot_publish_without_the_bond() {
     let mut c = setup();
     fund(&mut c, "p.test", 999);
     as_caller("p.test", 2);
-    c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None);
+    c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None, None);
 }
 
 #[test]
@@ -263,7 +263,7 @@ fn cannot_join_twice() {
     fund(&mut c, "p.test", 1000);
     fund(&mut c, "b.test", 500);
     as_caller("p.test", 2);
-    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None);
+    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None, None);
     as_caller("b.test", 3);
     c.join(id, None);
     c.join(id, None);
@@ -276,7 +276,7 @@ fn max_price_protects_the_buyer() {
     fund(&mut c, "p.test", 1000);
     fund(&mut c, "b.test", 500);
     as_caller("p.test", 2);
-    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None);
+    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None, None);
     as_caller("b.test", 3);
     c.join(id, Some(U128(249)));
 }
@@ -289,7 +289,7 @@ fn cannot_join_a_challenged_entry() {
     fund(&mut c, "x.test", 500);
     fund(&mut c, "b.test", 500);
     as_caller("p.test", 2);
-    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None);
+    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None, None);
     as_caller("x.test", 3);
     c.challenge(id, "".into());
     as_caller("b.test", 4);
@@ -303,7 +303,7 @@ fn only_verifiers_vote() {
     fund(&mut c, "p.test", 1000);
     fund(&mut c, "x.test", 500);
     as_caller("p.test", 2);
-    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None);
+    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None, None);
     as_caller("x.test", 3);
     c.challenge(id, "".into());
     c.vote(id, true);
@@ -323,9 +323,9 @@ fn competing_entries_for_one_task_key() {
     fund(&mut c, "p1.test", 1800);
     fund(&mut c, "p2.test", 1200);
     as_caller("p1.test", 2);
-    c.publish(KEY.into(), "t".into(), HASH.into(), U128(900), None);
+    c.publish(KEY.into(), "t".into(), HASH.into(), U128(900), None, None);
     as_caller("p2.test", 3);
-    c.publish(KEY.into(), "t".into(), HASH.into(), U128(600), None);
+    c.publish(KEY.into(), "t".into(), HASH.into(), U128(600), None, None);
     let found = c.entries_for_key(KEY.into());
     assert_eq!(found.len(), 2);
     assert_eq!(found[1].next_price.0, 300);
@@ -339,7 +339,7 @@ fn commissioned_work_pays_the_provider_and_everyone_ends_at_four() {
     fund(&mut c, "b.test", 6);
     fund(&mut c, "c.test", 4);
     as_caller("a.test", 2);
-    let id = c.publish(KEY.into(), "replay".into(), HASH.into(), U128(12), Some(acc("provider.test")));
+    let id = c.publish(KEY.into(), "replay".into(), HASH.into(), U128(12), Some(acc("provider.test")), None);
     assert_eq!(bal(&c, "provider.test"), 12, "provider earned 12");
     assert_eq!(bal(&c, "a.test"), 0);
 
@@ -368,7 +368,7 @@ fn cannot_name_yourself_as_provider() {
     let mut c = setup();
     fund(&mut c, "a.test", 36);
     as_caller("a.test", 2);
-    c.publish(KEY.into(), "t".into(), HASH.into(), U128(12), Some(acc("a.test")));
+    c.publish(KEY.into(), "t".into(), HASH.into(), U128(12), Some(acc("a.test")), None);
 }
 
 #[test]
@@ -377,7 +377,7 @@ fn one_dissenting_verifier_is_outvoted_and_unpaid() {
     fund(&mut c, "p.test", 2000);
     fund(&mut c, "x.test", 1000);
     as_caller("p.test", 2);
-    let id = c.publish(KEY.into(), "bad".into(), HASH.into(), U128(1000), None);
+    let id = c.publish(KEY.into(), "bad".into(), HASH.into(), U128(1000), None, None);
     as_caller("x.test", 3);
     c.challenge(id, "wrong".into());
     as_caller("v3.test", 4);
@@ -398,7 +398,7 @@ fn a_verifier_votes_once_per_challenge() {
     fund(&mut c, "p.test", 1000);
     fund(&mut c, "x.test", 1000);
     as_caller("p.test", 2);
-    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None);
+    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None, None);
     as_caller("x.test", 3);
     c.challenge(id, "".into());
     as_caller("v1.test", 4);
@@ -412,7 +412,7 @@ fn undecided_challenge_lapses_after_the_window_and_nobody_is_punished() {
     fund(&mut c, "p.test", 1000);
     fund(&mut c, "x.test", 1000);
     as_caller("p.test", 2);
-    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None);
+    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None, None);
     as_caller("x.test", 10);
     c.challenge(id, "".into());
     as_caller("v1.test", 11);
@@ -432,7 +432,7 @@ fn challenge_cannot_be_lapsed_early() {
     fund(&mut c, "p.test", 1000);
     fund(&mut c, "x.test", 1000);
     as_caller("p.test", 2);
-    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None);
+    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(500), None, None);
     as_caller("x.test", 10);
     c.challenge(id, "".into());
     as_caller("anyone.test", 10 + WINDOW - 1);
@@ -444,4 +444,95 @@ fn challenge_cannot_be_lapsed_early() {
 fn threshold_must_be_a_majority() {
     as_caller("owner.test", 0);
     Splitback::new(acc("usdc.test"), vec![acc("v1.test"), acc("v2.test"), acc("v3.test"), acc("v4.test")], 2, U64(WINDOW));
+}
+
+/// Delivery fee: each buyer pays it to the publisher on top of its share.
+#[test]
+fn delivery_fee_goes_to_the_publisher_and_stays_outside_the_split() {
+    let mut c = setup();
+    fund(&mut c, "p.test", 3600); // bond is 3 x cost when a fee is set
+    fund(&mut c, "b1.test", 1000);
+    fund(&mut c, "b2.test", 1000);
+    as_caller("p.test", 2);
+    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(1200), None, Some(U128(50)));
+    assert_eq!(bal(&c, "p.test"), 0, "bond of 3600 locked");
+    assert_eq!(c.quote(id).0, 650);
+
+    as_caller("b1.test", 3);
+    assert_eq!(c.join(id, Some(U128(650))).0, 650);
+    assert_eq!(bal(&c, "p.test"), 50, "fee arrives at once");
+    as_caller("b2.test", 4);
+    assert_eq!(c.join(id, None).0, 450);
+    assert_eq!(bal(&c, "p.test"), 100);
+
+    as_caller("p.test", 5);
+    assert_eq!(c.claim(id).0, 800);
+    as_caller("b1.test", 5);
+    assert_eq!(c.claim(id).0, 200);
+    // Shares are equal at 400. Each buyer also paid one fee of 50.
+    assert_eq!(bal(&c, "b1.test"), 1000 - 400 - 50);
+    assert_eq!(bal(&c, "b2.test"), 1000 - 400 - 50);
+    assert_eq!(c.get_stats().delivery_fees.0, 100);
+}
+
+#[test]
+fn delivery_fees_stop_once_they_total_the_cost() {
+    let mut c = setup();
+    fund(&mut c, "p.test", 300);
+    as_caller("p.test", 2);
+    let id = c.publish(KEY.into(), "t".into(), HASH.into(), U128(100), None, Some(U128(40)));
+    let mut fees = vec![];
+    for i in 0..4 {
+        let who = format!("b{i}.test");
+        fund(&mut c, &who, 200);
+        as_caller(&who, 3);
+        let e = c.get_entry(id).unwrap();
+        fees.push(e.next_fee.0);
+        c.join(id, None);
+    }
+    assert_eq!(fees, vec![40, 40, 20, 0]);
+    assert_eq!(c.get_entry(id).unwrap().fees_collected.0, 100);
+}
+
+#[test]
+fn a_voided_entry_refunds_delivery_fees_too() {
+    let mut c = setup();
+    fund(&mut c, "p.test", 3600);
+    fund(&mut c, "b1.test", 1000);
+    fund(&mut c, "b2.test", 1000);
+    as_caller("p.test", 2);
+    let id = c.publish(KEY.into(), "bad".into(), HASH.into(), U128(1200), None, Some(U128(50)));
+    as_caller("b1.test", 3);
+    c.join(id, None);
+    as_caller("b2.test", 4);
+    c.join(id, None);
+    as_caller("p.test", 5);
+    assert_eq!(c.claim(id).0, 800);
+    as_caller("b2.test", 6);
+    c.challenge(id, "wrong".into());
+    decide(&mut c, id, true, 7);
+
+    as_caller("b1.test", 8);
+    c.claim(id);
+    as_caller("b2.test", 8);
+    c.claim(id);
+    assert_eq!(bal(&c, "b1.test"), 1000, "share and fee both returned");
+    // Forfeit = bond 3600 - rebates claimed 800 - fees 100 = 2700. Verifiers get 135 each.
+    assert_eq!(bal(&c, "v1.test"), 135);
+    assert_eq!(bal(&c, "b2.test"), 1000 + 2700 - 270);
+    // The publisher kept 800 + 100 and lost 3600: down 2700, more than twice the cost.
+    assert_eq!(bal(&c, "p.test"), 900);
+    assert_eq!(
+        bal(&c, "p.test") + bal(&c, "b1.test") + bal(&c, "b2.test") + bal(&c, "v1.test") + bal(&c, "v2.test"),
+        3600 + 2000
+    );
+}
+
+#[test]
+#[should_panic(expected = "delivery fee cannot exceed the cost")]
+fn delivery_fee_is_capped_at_the_cost() {
+    let mut c = setup();
+    fund(&mut c, "p.test", 1000);
+    as_caller("p.test", 2);
+    c.publish(KEY.into(), "t".into(), HASH.into(), U128(100), None, Some(U128(101)));
 }

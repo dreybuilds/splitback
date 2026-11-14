@@ -6,7 +6,10 @@
     "sim:testnet": "node run.mjs --testnet",
     "pitch": "node pitch.mjs",
     "pitch:testnet": "node pitch.mjs --testnet",
-    "judge": "node judge.mjs"
+    "walkthrough": "node walkthrough.mjs",
+    "judge": "node judge.mjs",
+    "fund": "node fund.mjs",
+    "fund:testnet": "node fund.mjs --testnet"
   },
   "license": "ISC",
   "type": "module",

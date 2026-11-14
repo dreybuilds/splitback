@@ -16,7 +16,9 @@
       "status": "Open",
       "cost": "900000",
       "holders": 1,
-      "each_paid_net": "900000"
+      "each_paid_net": "900000",
+      "delivery_fee": "9000",
+      "fees_collected": "0"
     },
     {
       "id": 1,
@@ -25,7 +27,9 @@
       "status": "Voided",
       "cost": "560000",
       "holders": 7,
-      "each_paid_net": "80000"
+      "each_paid_net": "80000",
+      "delivery_fee": "5600",
+      "fees_collected": "33600"
     },
     {
       "id": 2,
@@ -34,7 +38,9 @@
       "status": "Open",
       "cost": "1500000",
       "holders": 8,
-      "each_paid_net": "187500"
+      "each_paid_net": "187500",
+      "delivery_fee": "15000",
+      "fees_collected": "105000"
     },
     {
       "id": 3,
@@ -43,7 +49,9 @@
       "status": "Open",
       "cost": "1200000",
       "holders": 11,
-      "each_paid_net": "109091"
+      "each_paid_net": "109091",
+      "delivery_fee": "12000",
+      "fees_collected": "120000"
     },
     {
       "id": 4,
@@ -52,7 +60,9 @@
       "status": "Closed",
       "cost": "750000",
       "holders": 9,
-      "each_paid_net": "83334"
+      "each_paid_net": "83334",
+      "delivery_fee": "7500",
+      "fees_collected": "60000"
     },
     {
       "id": 5,
@@ -61,7 +71,9 @@
       "status": "Open",
       "cost": "1350000",
       "holders": 10,
-      "each_paid_net": "135000"
+      "each_paid_net": "135000",
+      "delivery_fee": "13500",
+      "fees_collected": "121500"
     },
     {
       "id": 6,
@@ -70,7 +82,9 @@
       "status": "Open",
       "cost": "2000000",
       "holders": 5,
-      "each_paid_net": "400000"
+      "each_paid_net": "400000",
+      "delivery_fee": "20000",
+      "fees_collected": "80000"
     },
     {
       "id": 7,
@@ -79,16 +93,20 @@
       "status": "Open",
       "cost": "700000",
       "holders": 9,
-      "each_paid_net": "77778"
+      "each_paid_net": "77778",
+      "delivery_fee": "7000",
+      "fees_collected": "56000"
     },
     {
       "id": 8,
       "spec": "prime-count:below=1500000",
-      "publisher": "buyer-13.swarm.sandbox",
+      "publisher": "buyer-18.swarm.sandbox",
       "status": "Open",
       "cost": "600000",
       "holders": 5,
-      "each_paid_net": "120000"
+      "each_paid_net": "120000",
+      "delivery_fee": "6000",
+      "fees_collected": "24000"
     },
     {
       "id": 9,
@@ -97,7 +115,9 @@
       "status": "Open",
       "cost": "560000",
       "holders": 3,
-      "each_paid_net": "186667"
+      "each_paid_net": "186667",
+      "delivery_fee": "5600",
+      "fees_collected": "11200"
     }
   ],
   "stats": {
@@ -106,53 +126,44 @@
     "voided": 1,
     "cost_published": "10120000",
     "paid_in": "14952089",
-    "rebated": "15232079",
-    "slashed": "840000"
+    "rebated": "15265679",
+    "slashed": "1366400",
+    "delivery_fees": "611300"
   },
   "cost_if_every_agent_computed_alone_micro_usdc": "67330000",
-  "cost_actually_paid_micro_usdc": "9560010",
-  "saving_percent": 85.8,
+  "cost_actually_paid_micro_usdc": "10137710",
+  "of_which_delivery_fees_micro_usdc": "577700",
+  "saving_percent": 84.94,
   "rounding_dust_left_in_contract_micro_usdc": "10",
   "poisoner_seller_5_balance": {
     "start": "10000000",
-    "end": "9160000"
+    "end": "8633600"
   },
   "challenger": "buyer-10",
   "verifier_earnings": {
-    "verifier-1": "48750",
-    "verifier-2": "42000",
+    "verifier-1": "75070",
+    "verifier-2": "68320",
     "verifier-3": "6750"
   },
   "challenger_balance": {
-    "start": "4000000",
-    "end": "4511909"
+    "start": "6000000",
+    "end": "6960169"
   },
   "rpc_url": null,
   "explorer_tx_url": null,
   "receipts": [
     {
       "round": 1,
-      "buyer": "buyer-14.swarm.sandbox",
-      "bought": "sha256-chain:seed=near;rounds=400000",
-      "entry": 7,
-      "from": "seller-4.swarm.sandbox",
-      "price_micro_usdc": "350000",
-      "alone_would_cost_micro_usdc": "900000",
+      "buyer": "buyer-10.swarm.sandbox",
+      "bought": "sha256-chain:seed=intents;rounds=600000",
+      "entry": 5,
+      "from": "seller-1.swarm.sandbox",
+      "price_micro_usdc": "688500",
+      "of_which_delivery_fee_micro_usdc": "13500",
+      "alone_would_cost_micro_usdc": "1350000",
       "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "8FyWHeF8gDMFVba9DG3pUnJm7M1gK89Frx5emdywgFyp"
-    },
-    {
-      "round": 1,
-      "buyer": "buyer-12.swarm.sandbox",
-      "bought": "sha256-chain:seed=near;rounds=400000",
-      "entry": 7,
-      "from": "seller-4.swarm.sandbox",
-      "price_micro_usdc": "175000",
-      "alone_would_cost_micro_usdc": "900000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "98TVGVQzZcf6AMjTTxVUkVc3ybG22zoLQw5r9VDS748d"
+      "audit": "recomputed, matches",
+      "tx": "Aff2p1d2u3JnvE2xMu2V3vXjeQptABHpohPU7X5oh5fv"
     },
     {
       "round": 1,
@@ -160,35 +171,12 @@
       "bought": "sha256-chain:seed=intents;rounds=600000",
       "entry": 5,
       "from": "seller-1.swarm.sandbox",
-      "price_micro_usdc": "192858",
+      "price_micro_usdc": "206358",
+      "of_which_delivery_fee_micro_usdc": "13500",
       "alone_would_cost_micro_usdc": "1350000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "9Yvc8BMT6KvsWb4CcRDbrYTbXZfBiMk7gYDApWKnNP5b"
-    },
-    {
-      "round": 1,
-      "buyer": "buyer-6.swarm.sandbox",
-      "bought": "sha256-chain:seed=swarm;rounds=250000",
-      "entry": 1,
-      "from": "seller-5.swarm.sandbox",
-      "price_micro_usdc": "280000",
-      "alone_would_cost_micro_usdc": "560000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "EWGHGiUvspWqbPq8H9vKVXBXRDzH1UmTQKgCD5yZxPkQ"
-    },
-    {
-      "round": 1,
-      "buyer": "buyer-2.swarm.sandbox",
-      "bought": "sha256-chain:seed=intents;rounds=600000",
-      "entry": 5,
-      "from": "seller-1.swarm.sandbox",
-      "price_micro_usdc": "675000",
-      "alone_would_cost_micro_usdc": "1350000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "G2cpbcCzj7J8emw2xxAGWbqgvqLtdP8y1F8hnbntHAGS"
+      "tx": "94wrPccktmZMT7FYuqhZfc5DTV7KiWu9YjrnrcfCU13Q"
     },
     {
       "round": 1,
@@ -196,119 +184,51 @@
       "bought": "sha256-chain:seed=intents;rounds=600000",
       "entry": 5,
       "from": "seller-1.swarm.sandbox",
-      "price_micro_usdc": "450000",
+      "price_micro_usdc": "182250",
+      "of_which_delivery_fee_micro_usdc": "13500",
       "alone_would_cost_micro_usdc": "1350000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "9BdQgFukHFEYq2CYSbFBSJiQ9DzRgQBUnL8HA8jN9rJw"
+      "tx": "GwWyhGmW27JSoqhjTB2cTXmH3v5MD5mR2r9uZj1GWXpa"
     },
     {
       "round": 1,
-      "buyer": "buyer-5.swarm.sandbox",
+      "buyer": "buyer-12.swarm.sandbox",
       "bought": "sha256-chain:seed=near;rounds=400000",
       "entry": 7,
       "from": "seller-4.swarm.sandbox",
-      "price_micro_usdc": "140000",
-      "alone_would_cost_micro_usdc": "900000",
-      "hash_check_passed": true,
-      "audit": "recomputed, matches",
-      "tx": "5mMSgQ9jNfJ2q8iQXe18UKWFwh31bJxMUyHEtXNmGypT"
-    },
-    {
-      "round": 1,
-      "buyer": "buyer-15.swarm.sandbox",
-      "bought": "sha256-chain:seed=near;rounds=400000",
-      "entry": 7,
-      "from": "seller-4.swarm.sandbox",
-      "price_micro_usdc": "233334",
-      "alone_would_cost_micro_usdc": "900000",
-      "hash_check_passed": true,
-      "audit": "recomputed, matches",
-      "tx": "EhsMLyx2LHxRZEWH98hetN3a8dZtSyCB9dxyZdixUGRG"
-    },
-    {
-      "round": 1,
-      "buyer": "buyer-20.swarm.sandbox",
-      "bought": "collatz-max:below=300000",
-      "entry": 4,
-      "from": "seller-3.swarm.sandbox",
-      "price_micro_usdc": "375000",
-      "alone_would_cost_micro_usdc": "750000",
-      "hash_check_passed": true,
-      "audit": "recomputed, matches",
-      "tx": "EoMtfRoVqjA46x8gUJdfR9sFpV7qng8BtYm9BTzkX4V2"
-    },
-    {
-      "round": 1,
-      "buyer": "buyer-10.swarm.sandbox",
-      "bought": "sha256-chain:seed=intents;rounds=600000",
-      "entry": 5,
-      "from": "seller-1.swarm.sandbox",
-      "price_micro_usdc": "337500",
-      "alone_would_cost_micro_usdc": "1350000",
-      "hash_check_passed": true,
-      "audit": "recomputed, matches",
-      "tx": "FLFDM3xqzN4SCFFHJtWCmGT6oguwLv5Z4uSQo6v4vQwX"
-    },
-    {
-      "round": 1,
-      "buyer": "buyer-16.swarm.sandbox",
-      "bought": "sha256-chain:seed=intents;rounds=600000",
-      "entry": 5,
-      "from": "seller-1.swarm.sandbox",
-      "price_micro_usdc": "225000",
-      "alone_would_cost_micro_usdc": "1350000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "Ez58xe4ErqnaUcrAyMepRdhXLwEr7fCbEhXY4SR3tkc9"
-    },
-    {
-      "round": 1,
-      "buyer": "buyer-19.swarm.sandbox",
-      "bought": "sha256-chain:seed=near;rounds=400000",
-      "entry": 7,
-      "from": "seller-4.swarm.sandbox",
-      "price_micro_usdc": "116667",
+      "price_micro_usdc": "147000",
+      "of_which_delivery_fee_micro_usdc": "7000",
       "alone_would_cost_micro_usdc": "900000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "2BGuw18Bs6rgW4fTuzP9Qfdu5BWVgDwZ7Ggx5ZTE5JYe"
+      "tx": "2wZ3k94n2ACuC8D5pjKqwfq2k7wGD6GcrcFgoeBAHCzp"
     },
     {
       "round": 1,
-      "buyer": "buyer-3.swarm.sandbox",
-      "bought": "collatz-max:below=600000",
-      "entry": 2,
-      "from": "seller-4.swarm.sandbox",
-      "price_micro_usdc": "750000",
-      "alone_would_cost_micro_usdc": "1500000",
+      "buyer": "buyer-6.swarm.sandbox",
+      "bought": "sha256-chain:seed=swarm;rounds=250000",
+      "entry": 1,
+      "from": "seller-5.swarm.sandbox",
+      "price_micro_usdc": "285600",
+      "of_which_delivery_fee_micro_usdc": "5600",
+      "alone_would_cost_micro_usdc": "560000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "28BaCyS71VBH5TGwYgQGbDP8HQHbx9f7f623WGkZ97Kf"
+      "tx": "JC5zdnyb9yV54MWcc9jJaDgKuYVSo8cL6ZhpeUyhezpm"
     },
     {
       "round": 1,
-      "buyer": "buyer-4.swarm.sandbox",
+      "buyer": "buyer-2.swarm.sandbox",
       "bought": "sha256-chain:seed=intents;rounds=600000",
       "entry": 5,
       "from": "seller-1.swarm.sandbox",
-      "price_micro_usdc": "270000",
+      "price_micro_usdc": "238500",
+      "of_which_delivery_fee_micro_usdc": "13500",
       "alone_would_cost_micro_usdc": "1350000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "DcGHYhzyfRvAJg23HKnzoQFCqeqkrjrJ6KBRgfDyL5aU"
-    },
-    {
-      "round": 1,
-      "buyer": "buyer-1.swarm.sandbox",
-      "bought": "sha256-chain:seed=intents;rounds=600000",
-      "entry": 5,
-      "from": "seller-1.swarm.sandbox",
-      "price_micro_usdc": "168750",
-      "alone_would_cost_micro_usdc": "1350000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "J88on1JTCDJB3LaydC1MSVmxioeGT6KVpHPyNAsvQAeN"
+      "tx": "9KCXFqbDPshDSDGrQeLupartzJQ8ByqPTEmdwsT7oQyj"
     },
     {
       "round": 1,
@@ -316,11 +236,64 @@
       "bought": "prime-count:below=3000000",
       "entry": 3,
       "from": "seller-2.swarm.sandbox",
-      "price_micro_usdc": "600000",
+      "price_micro_usdc": "612000",
+      "of_which_delivery_fee_micro_usdc": "12000",
       "alone_would_cost_micro_usdc": "1200000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "Exyo7Pv3ahUDzBExqe1Tg9YQuam3dBuZCofjufSuM9mY"
+      "tx": "HkyvfZh9xqh7cg8R1oH1gatRbPDjL6D7CcUuUJk8wdgn"
+    },
+    {
+      "round": 1,
+      "buyer": "buyer-5.swarm.sandbox",
+      "bought": "sha256-chain:seed=near;rounds=400000",
+      "entry": 7,
+      "from": "seller-4.swarm.sandbox",
+      "price_micro_usdc": "240334",
+      "of_which_delivery_fee_micro_usdc": "7000",
+      "alone_would_cost_micro_usdc": "900000",
+      "hash_check_passed": true,
+      "audit": "recomputed, matches",
+      "tx": "3eofjJDW8eioyfqozyYDgmDcm9rTo3f6aKQ6yLdTosfE"
+    },
+    {
+      "round": 1,
+      "buyer": "buyer-3.swarm.sandbox",
+      "bought": "collatz-max:below=600000",
+      "entry": 2,
+      "from": "seller-4.swarm.sandbox",
+      "price_micro_usdc": "765000",
+      "of_which_delivery_fee_micro_usdc": "15000",
+      "alone_would_cost_micro_usdc": "1500000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "4TK8EPKWJokVp7v3Vj5Z5YT7KD5iHREWWuYiFrwrfD3r"
+    },
+    {
+      "round": 1,
+      "buyer": "buyer-20.swarm.sandbox",
+      "bought": "collatz-max:below=300000",
+      "entry": 4,
+      "from": "seller-3.swarm.sandbox",
+      "price_micro_usdc": "382500",
+      "of_which_delivery_fee_micro_usdc": "7500",
+      "alone_would_cost_micro_usdc": "750000",
+      "hash_check_passed": true,
+      "audit": "recomputed, matches",
+      "tx": "DYTdJNzskr3ckmFZdovM3roNGvcmNuZNVGXy2USstoMV"
+    },
+    {
+      "round": 1,
+      "buyer": "buyer-16.swarm.sandbox",
+      "bought": "sha256-chain:seed=intents;rounds=600000",
+      "entry": 5,
+      "from": "seller-1.swarm.sandbox",
+      "price_micro_usdc": "463500",
+      "of_which_delivery_fee_micro_usdc": "13500",
+      "alone_would_cost_micro_usdc": "1350000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "ADSqB8aHMvRgsy52vumCWj8yCWCdowQ1L43T5Pp5AYJx"
     },
     {
       "round": 1,
@@ -328,203 +301,116 @@
       "bought": "collatz-max:below=300000",
       "entry": 4,
       "from": "seller-3.swarm.sandbox",
-      "price_micro_usdc": "250000",
+      "price_micro_usdc": "257500",
+      "of_which_delivery_fee_micro_usdc": "7500",
       "alone_would_cost_micro_usdc": "750000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "4WB7k5yHMWicoy1xJwnkJS5NYYbyMSYa6po332jmjL6V"
+      "tx": "HjhpRMyLmXqjoPt2TyvgseNtXU6G87fM3vdruXyLgreP"
     },
     {
       "round": 1,
-      "buyer": "buyer-13.swarm.sandbox",
+      "buyer": "buyer-14.swarm.sandbox",
+      "bought": "sha256-chain:seed=near;rounds=400000",
+      "entry": 7,
+      "from": "seller-4.swarm.sandbox",
+      "price_micro_usdc": "123667",
+      "of_which_delivery_fee_micro_usdc": "7000",
+      "alone_would_cost_micro_usdc": "900000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "FRSbqSorMpTHQEnnkMzDtUgfsJYQHd1L2d2L9wYRokoZ"
+    },
+    {
+      "round": 1,
+      "buyer": "buyer-19.swarm.sandbox",
+      "bought": "sha256-chain:seed=near;rounds=400000",
+      "entry": 7,
+      "from": "seller-4.swarm.sandbox",
+      "price_micro_usdc": "182000",
+      "of_which_delivery_fee_micro_usdc": "7000",
+      "alone_would_cost_micro_usdc": "900000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "EfwQrjPXVDnjqRB911fXRC8sdkvaFZtqgo6gdgkFV57J"
+    },
+    {
+      "round": 1,
+      "buyer": "buyer-15.swarm.sandbox",
+      "bought": "sha256-chain:seed=near;rounds=400000",
+      "entry": 7,
+      "from": "seller-4.swarm.sandbox",
+      "price_micro_usdc": "357000",
+      "of_which_delivery_fee_micro_usdc": "7000",
+      "alone_would_cost_micro_usdc": "900000",
+      "hash_check_passed": true,
+      "audit": "recomputed, matches",
+      "tx": "4bEzgu8hXXxRpDHzYXSZZdLCwTQ3keaPNoMgWdkgUqJo"
+    },
+    {
+      "round": 1,
+      "buyer": "buyer-4.swarm.sandbox",
+      "bought": "sha256-chain:seed=intents;rounds=600000",
+      "entry": 5,
+      "from": "seller-1.swarm.sandbox",
+      "price_micro_usdc": "283500",
+      "of_which_delivery_fee_micro_usdc": "13500",
+      "alone_would_cost_micro_usdc": "1350000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "ExafqymP8HztQcS2iiw1HvxNhtNpVMUggpjqo9dC4bKm"
+    },
+    {
+      "round": 1,
+      "buyer": "buyer-1.swarm.sandbox",
+      "bought": "sha256-chain:seed=intents;rounds=600000",
+      "entry": 5,
+      "from": "seller-1.swarm.sandbox",
+      "price_micro_usdc": "351000",
+      "of_which_delivery_fee_micro_usdc": "13500",
+      "alone_would_cost_micro_usdc": "1350000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "EvWzs3KJK1xxMUw2gwopHHk6JJvoaDJNuXeesywVUWz8"
+    },
+    {
+      "round": 1,
+      "buyer": "buyer-18.swarm.sandbox",
       "bought": "prime-count:below=1500000",
       "entry": 8,
       "from": "computed it itself, then published",
       "price_micro_usdc": "600000",
+      "of_which_delivery_fee_micro_usdc": "0",
       "alone_would_cost_micro_usdc": "600000",
       "hash_check_passed": true,
       "audit": "own work",
-      "tx": "642nUMTWpyMCpmZddBJ3JGbSXKaefz55YwTY6evJX3mH"
+      "tx": "5RiM5aFqdjjGMvvHiKdRzyZuKmWhajNc69zhstvq6mjb"
     },
     {
       "round": 1,
-      "buyer": "buyer-18.swarm.sandbox",
+      "buyer": "buyer-13.swarm.sandbox",
       "bought": "prime-count:below=1500000",
       "entry": 8,
-      "from": "buyer-13.swarm.sandbox",
-      "price_micro_usdc": "300000",
+      "from": "buyer-18.swarm.sandbox",
+      "price_micro_usdc": "306000",
+      "of_which_delivery_fee_micro_usdc": "6000",
       "alone_would_cost_micro_usdc": "600000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "QsMBZufqHHDwuUB9KhFqSk1wmiLWFbGXvzYpEgTsLHH"
+      "tx": "4DGaYGxKQScvpT7Uxe1nivREcBRge5nU4DrdQQqymu4o"
     },
     {
       "round": 1,
       "buyer": "buyer-17.swarm.sandbox",
       "bought": "prime-count:below=1500000",
       "entry": 8,
-      "from": "buyer-13.swarm.sandbox",
-      "price_micro_usdc": "200000",
+      "from": "buyer-18.swarm.sandbox",
+      "price_micro_usdc": "206000",
+      "of_which_delivery_fee_micro_usdc": "6000",
       "alone_would_cost_micro_usdc": "600000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "8HqR3jJaicRkXgFA7DCkuzyk4fg5qYtLvE6VdcWUEBCd"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-5.swarm.sandbox",
-      "bought": "sha256-chain:seed=swarm;rounds=250000",
-      "entry": 1,
-      "from": "seller-5.swarm.sandbox",
-      "price_micro_usdc": "112000",
-      "alone_would_cost_micro_usdc": "560000",
-      "hash_check_passed": true,
-      "audit": "recomputed, MISMATCH",
-      "tx": "G9ysCbpYiPjFKk5fb1LRAZTykUk5CrTTvasHoCABrSaq"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-6.swarm.sandbox",
-      "bought": "collatz-max:below=300000",
-      "entry": 4,
-      "from": "seller-3.swarm.sandbox",
-      "price_micro_usdc": "187500",
-      "alone_would_cost_micro_usdc": "750000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "K6sdqE13CrVq7yi3czjzFNTLL2XfGFXbbqDH2JYa4Lb"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-9.swarm.sandbox",
-      "bought": "collatz-max:below=300000",
-      "entry": 4,
-      "from": "seller-3.swarm.sandbox",
-      "price_micro_usdc": "125000",
-      "alone_would_cost_micro_usdc": "750000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "D5m78d5TUm3Y6RXMU5KecH76LbFQA5foXinYarMXaeUJ"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-1.swarm.sandbox",
-      "bought": "orderbook-replay:market=NEAR-USDC;seed=2026-11-13;events=1500000",
-      "entry": 6,
-      "from": "seller-2.swarm.sandbox",
-      "price_micro_usdc": "1000000",
-      "alone_would_cost_micro_usdc": "2000000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "2HVJ7KPk689Dz6oTqoRKm9ro3zQLDJC7fuVWbgaeZiAy"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-15.swarm.sandbox",
-      "bought": "collatz-max:below=600000",
-      "entry": 2,
-      "from": "seller-4.swarm.sandbox",
-      "price_micro_usdc": "500000",
-      "alone_would_cost_micro_usdc": "1500000",
-      "hash_check_passed": true,
-      "audit": "recomputed, matches",
-      "tx": "FU44LfiQv35VCyB7nockzL5XBgyNy2kuoRSv3zuDj4aF"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-11.swarm.sandbox",
-      "bought": "sha256-chain:seed=swarm;rounds=250000",
-      "entry": 1,
-      "from": "seller-5.swarm.sandbox",
-      "price_micro_usdc": "80000",
-      "alone_would_cost_micro_usdc": "560000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "3Qhjks8JE8c2tSKByngXJ6fj5YbezSr8z8uzz7WZFjk4"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-17.swarm.sandbox",
-      "bought": "collatz-max:below=300000",
-      "entry": 4,
-      "from": "seller-3.swarm.sandbox",
-      "price_micro_usdc": "150000",
-      "alone_would_cost_micro_usdc": "750000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "H7fY8pA41DrPxWmWZkAmFHe3sye9ERD78nJ6hYaKHNZY"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-19.swarm.sandbox",
-      "bought": "sha256-chain:seed=swarm;rounds=250000",
-      "entry": 1,
-      "from": "seller-5.swarm.sandbox",
-      "price_micro_usdc": "93334",
-      "alone_would_cost_micro_usdc": "560000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "3ehAbKGNCETnCxrgCchFpFncLodhbSEJxgJ59yjnyeAG"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-4.swarm.sandbox",
-      "bought": "sha256-chain:seed=near;rounds=400000",
-      "entry": 7,
-      "from": "seller-4.swarm.sandbox",
-      "price_micro_usdc": "87500",
-      "alone_would_cost_micro_usdc": "900000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "13PoqbVWyP2rfmefFuo8qi7XdYQ3ngoz3tqrW2HMLKQx"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-8.swarm.sandbox",
-      "bought": "collatz-max:below=600000",
-      "entry": 2,
-      "from": "seller-4.swarm.sandbox",
-      "price_micro_usdc": "300000",
-      "alone_would_cost_micro_usdc": "1500000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "DboFwnHRxHovfAeNrkSCvMiDxENYbR4sGfxu64wgzM7p"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-18.swarm.sandbox",
-      "bought": "sha256-chain:seed=intents;rounds=600000",
-      "entry": 5,
-      "from": "seller-1.swarm.sandbox",
-      "price_micro_usdc": "150000",
-      "alone_would_cost_micro_usdc": "1350000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "39R9wZ3jHhQBmhDjx3sYBxNdZVWWH6sfAkKza5iwXWTE"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-3.swarm.sandbox",
-      "bought": "prime-count:below=3000000",
-      "entry": 3,
-      "from": "seller-2.swarm.sandbox",
-      "price_micro_usdc": "171429",
-      "alone_would_cost_micro_usdc": "1200000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "FEVitFeqqqYSPbpTbJnpNzLX1yJodBjzThnucFDFxdQk"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-16.swarm.sandbox",
-      "bought": "collatz-max:below=600000",
-      "entry": 2,
-      "from": "seller-4.swarm.sandbox",
-      "price_micro_usdc": "375000",
-      "alone_would_cost_micro_usdc": "1500000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "3kSnfTHz4cdX3KjT8MyRCNDXqfvZVg8VXewVaDxVSmZS"
+      "tx": "BTKiyE9aQTPbCFRAibb6UKHY1p4E1owEQP1LCQsLzz8L"
     },
     {
       "round": 2,
@@ -532,59 +418,25 @@
       "bought": "prime-count:below=3000000",
       "entry": 3,
       "from": "seller-2.swarm.sandbox",
-      "price_micro_usdc": "200000",
+      "price_micro_usdc": "412000",
+      "of_which_delivery_fee_micro_usdc": "12000",
       "alone_would_cost_micro_usdc": "1200000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "64DGLVH6rxWkuY78nt4dqWs22EfgCPJZQryyzfofAVcH"
+      "tx": "9JsrWZViJtY34iD6QdSjdnAPQsJ2ML8PZnJMMRxGpGqA"
     },
     {
       "round": 2,
-      "buyer": "buyer-20.swarm.sandbox",
-      "bought": "sha256-chain:seed=near;rounds=400000",
-      "entry": 7,
+      "buyer": "buyer-15.swarm.sandbox",
+      "bought": "collatz-max:below=600000",
+      "entry": 2,
       "from": "seller-4.swarm.sandbox",
-      "price_micro_usdc": "100000",
-      "alone_would_cost_micro_usdc": "900000",
+      "price_micro_usdc": "390000",
+      "of_which_delivery_fee_micro_usdc": "15000",
+      "alone_would_cost_micro_usdc": "1500000",
       "hash_check_passed": true,
       "audit": "recomputed, matches",
-      "tx": "BTJDpEVXZubAWcgADg7JpA5Mr2apCj2TggUy4BT21KJP"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-2.swarm.sandbox",
-      "bought": "prime-count:below=3000000",
-      "entry": 3,
-      "from": "seller-2.swarm.sandbox",
-      "price_micro_usdc": "400000",
-      "alone_would_cost_micro_usdc": "1200000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "8xKraPu9WSDYKvHLvW6XK78y8tXUJWmC1b3QD9Rc9Beu"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-14.swarm.sandbox",
-      "bought": "prime-count:below=3000000",
-      "entry": 3,
-      "from": "seller-2.swarm.sandbox",
-      "price_micro_usdc": "240000",
-      "alone_would_cost_micro_usdc": "1200000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "HfSGkT74ccn5AvxR7xRDbDRxXd1BaHSKUtoDgeiWv7wv"
-    },
-    {
-      "round": 2,
-      "buyer": "buyer-10.swarm.sandbox",
-      "bought": "sha256-chain:seed=swarm;rounds=250000",
-      "entry": 1,
-      "from": "seller-5.swarm.sandbox",
-      "price_micro_usdc": "186667",
-      "alone_would_cost_micro_usdc": "560000",
-      "hash_check_passed": true,
-      "audit": "recomputed, MISMATCH",
-      "tx": "CtusnQfxxRusnwnArpsA2CXdqKiN3XvK1gdKGjwZZ55Y"
+      "tx": "4MGXdqmJduvXyZYGiFoUaeoubNQ7sKWLeS4HvV7B3MyV"
     },
     {
       "round": 2,
@@ -592,11 +444,12 @@
       "bought": "prime-count:below=3000000",
       "entry": 3,
       "from": "seller-2.swarm.sandbox",
-      "price_micro_usdc": "300000",
+      "price_micro_usdc": "183429",
+      "of_which_delivery_fee_micro_usdc": "12000",
       "alone_would_cost_micro_usdc": "1200000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "G8LgTpzqiTNwPMduCQraXtVZ6fBEXCtbS15g7KojmdaU"
+      "tx": "BuY2kYGEimJm3KTDjUVG1DbFCTnCwPzXtqgq1t31wqHF"
     },
     {
       "round": 2,
@@ -604,203 +457,220 @@
       "bought": "sha256-chain:seed=swarm;rounds=250000",
       "entry": 1,
       "from": "seller-5.swarm.sandbox",
-      "price_micro_usdc": "140000",
+      "price_micro_usdc": "98934",
+      "of_which_delivery_fee_micro_usdc": "5600",
       "alone_would_cost_micro_usdc": "560000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "HknFLg4SUpifmdPSfqPxNGSFWxFoNN58FScGv7x3VPMt"
+      "tx": "9fXut68GVFHzLTZFsjK63vLn8UMnfe1ivu9adyQyteZK"
     },
     {
-      "round": 3,
-      "buyer": "buyer-2.swarm.sandbox",
+      "round": 2,
+      "buyer": "buyer-1.swarm.sandbox",
       "bought": "orderbook-replay:market=NEAR-USDC;seed=2026-11-13;events=1500000",
       "entry": 6,
       "from": "seller-2.swarm.sandbox",
-      "price_micro_usdc": "666667",
+      "price_micro_usdc": "1020000",
+      "of_which_delivery_fee_micro_usdc": "20000",
       "alone_would_cost_micro_usdc": "2000000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "EXLEM3BpV7uMDfk8LxeC2sWjnTKaN3RdBFPUCa5xndu9"
+      "tx": "59ddDTV5ejFZnhqAS4sWtCP6tfBWfXUw6H4GB6k7McTK"
     },
     {
-      "round": 3,
-      "buyer": "buyer-4.swarm.sandbox",
-      "bought": "prime-count:below=3000000",
-      "entry": 3,
-      "from": "seller-2.swarm.sandbox",
-      "price_micro_usdc": "133334",
-      "alone_would_cost_micro_usdc": "1200000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "ASk51cBwNNk1AstxXVaUtxLfnwYrEGK5ZwHhXbNVXHE1"
-    },
-    {
-      "round": 3,
-      "buyer": "buyer-5.swarm.sandbox",
-      "bought": "collatz-max:below=300000",
-      "entry": 4,
-      "from": "seller-3.swarm.sandbox",
-      "price_micro_usdc": "107143",
-      "alone_would_cost_micro_usdc": "750000",
-      "hash_check_passed": true,
-      "audit": "recomputed, matches",
-      "tx": "8Ey6D5QRG4b4pK19VLyGt2ArwCuo21XjJELSYCBZh8Pq"
-    },
-    {
-      "round": 3,
-      "buyer": "buyer-12.swarm.sandbox",
-      "bought": "prime-count:below=1500000",
-      "entry": 8,
-      "from": "buyer-13.swarm.sandbox",
-      "price_micro_usdc": "150000",
-      "alone_would_cost_micro_usdc": "600000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "B1FnNDamMt6G4AM8L2WdG6NCQeWSciQSw523LnV4PKXt"
-    },
-    {
-      "round": 3,
+      "round": 2,
       "buyer": "buyer-17.swarm.sandbox",
-      "bought": "prime-count:below=3000000",
-      "entry": 3,
-      "from": "seller-2.swarm.sandbox",
-      "price_micro_usdc": "150000",
-      "alone_would_cost_micro_usdc": "1200000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "8oCeX36Qryctfwb4uUzwbipSnRxeEFyFQdXJJ1VdfMwV"
-    },
-    {
-      "round": 3,
-      "buyer": "buyer-6.swarm.sandbox",
-      "bought": "collatz-max:below=600000",
-      "entry": 2,
-      "from": "seller-4.swarm.sandbox",
-      "price_micro_usdc": "250000",
-      "alone_would_cost_micro_usdc": "1500000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "J6j3KrDRQPb6tEdQ6a45aDZ9nySUZkJ1oFMX3avt6n7s"
-    },
-    {
-      "round": 3,
-      "buyer": "buyer-19.swarm.sandbox",
-      "bought": "orderbook-replay:market=NEAR-USDC;seed=2026-11-13;events=1500000",
-      "entry": 6,
-      "from": "seller-2.swarm.sandbox",
-      "price_micro_usdc": "500000",
-      "alone_would_cost_micro_usdc": "2000000",
-      "hash_check_passed": true,
-      "audit": "not audited",
-      "tx": "5KgrGnzZpaPLr8u5rdf4PrUkL7BTKq6DcZbcbB6aYg41"
-    },
-    {
-      "round": 3,
-      "buyer": "buyer-13.swarm.sandbox",
       "bought": "collatz-max:below=300000",
       "entry": 4,
       "from": "seller-3.swarm.sandbox",
-      "price_micro_usdc": "93750",
+      "price_micro_usdc": "195000",
+      "of_which_delivery_fee_micro_usdc": "7500",
       "alone_would_cost_micro_usdc": "750000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "9ujetcSp6pv1YEsotibq34DS8RPivensbDh3W9wYDodv"
+      "tx": "BoEjb6BRRVqjeyEoNwN8NN2Dm8cdSghnY32eFmF2ukm5"
     },
     {
-      "round": 3,
-      "buyer": "buyer-10.swarm.sandbox",
+      "round": 2,
+      "buyer": "buyer-14.swarm.sandbox",
       "bought": "prime-count:below=3000000",
       "entry": 3,
       "from": "seller-2.swarm.sandbox",
-      "price_micro_usdc": "120000",
+      "price_micro_usdc": "252000",
+      "of_which_delivery_fee_micro_usdc": "12000",
       "alone_would_cost_micro_usdc": "1200000",
       "hash_check_passed": true,
-      "audit": "recomputed, matches",
-      "tx": "3wN8tL9Wkvuj7xdSJdymYmFPYdjK9ozn9kku5Lbr7jQr"
+      "audit": "not audited",
+      "tx": "G8WLqYhndxfEFMS7jChN53gCwdfetp5gJga4aaX9pDky"
     },
     {
-      "round": 3,
-      "buyer": "buyer-8.swarm.sandbox",
-      "bought": "orderbook-replay:market=NEAR-USDC;seed=2026-11-13;events=1500000",
-      "entry": 6,
-      "from": "seller-2.swarm.sandbox",
-      "price_micro_usdc": "400000",
-      "alone_would_cost_micro_usdc": "2000000",
+      "round": 2,
+      "buyer": "buyer-6.swarm.sandbox",
+      "bought": "collatz-max:below=300000",
+      "entry": 4,
+      "from": "seller-3.swarm.sandbox",
+      "price_micro_usdc": "157500",
+      "of_which_delivery_fee_micro_usdc": "7500",
+      "alone_would_cost_micro_usdc": "750000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "9HiezW2jRoVF4uBQqYp8gAroo1eHbV8HrQExjYZr2nb4"
+      "tx": "8TCSvLdF6BvQCL8u1RBX9Se1cLv26QsTxJn7oBBb1a8Z"
     },
     {
-      "round": 3,
-      "buyer": "buyer-14.swarm.sandbox",
+      "round": 2,
+      "buyer": "buyer-4.swarm.sandbox",
+      "bought": "sha256-chain:seed=near;rounds=400000",
+      "entry": 7,
+      "from": "seller-4.swarm.sandbox",
+      "price_micro_usdc": "107000",
+      "of_which_delivery_fee_micro_usdc": "7000",
+      "alone_would_cost_micro_usdc": "900000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "Ep8aqp27X8qbpctrFqdMqVDBBFiy6uvwepbzwjCtKxkn"
+    },
+    {
+      "round": 2,
+      "buyer": "buyer-20.swarm.sandbox",
+      "bought": "sha256-chain:seed=near;rounds=400000",
+      "entry": 7,
+      "from": "seller-4.swarm.sandbox",
+      "price_micro_usdc": "94500",
+      "of_which_delivery_fee_micro_usdc": "7000",
+      "alone_would_cost_micro_usdc": "900000",
+      "hash_check_passed": true,
+      "audit": "recomputed, matches",
+      "tx": "5CvJvBs1KeYUxPA6cLmDNwmhGVLCbFgEyooqr247HZ9Q"
+    },
+    {
+      "round": 2,
+      "buyer": "buyer-2.swarm.sandbox",
+      "bought": "prime-count:below=3000000",
+      "entry": 3,
+      "from": "seller-2.swarm.sandbox",
+      "price_micro_usdc": "212000",
+      "of_which_delivery_fee_micro_usdc": "12000",
+      "alone_would_cost_micro_usdc": "1200000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "6pxHAnwaWNJ4TVZ2WPgPDoPF2pgdiZVag61morSMC1si"
+    },
+    {
+      "round": 2,
+      "buyer": "buyer-10.swarm.sandbox",
+      "bought": "sha256-chain:seed=swarm;rounds=250000",
+      "entry": 1,
+      "from": "seller-5.swarm.sandbox",
+      "price_micro_usdc": "192267",
+      "of_which_delivery_fee_micro_usdc": "5600",
+      "alone_would_cost_micro_usdc": "560000",
+      "hash_check_passed": true,
+      "audit": "recomputed, MISMATCH",
+      "tx": "AmzA8MzL4jnNMxpfLr9QgXcQa6f2hMirQK68cQ2PVQPw"
+    },
+    {
+      "round": 2,
+      "buyer": "buyer-19.swarm.sandbox",
+      "bought": "sha256-chain:seed=swarm;rounds=250000",
+      "entry": 1,
+      "from": "seller-5.swarm.sandbox",
+      "price_micro_usdc": "117600",
+      "of_which_delivery_fee_micro_usdc": "5600",
+      "alone_would_cost_micro_usdc": "560000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "B7HYP35CHidFqv5xkzfkueT9ZTP5uBnNWq36EP1vV16B"
+    },
+    {
+      "round": 2,
+      "buyer": "buyer-5.swarm.sandbox",
+      "bought": "sha256-chain:seed=swarm;rounds=250000",
+      "entry": 1,
+      "from": "seller-5.swarm.sandbox",
+      "price_micro_usdc": "145600",
+      "of_which_delivery_fee_micro_usdc": "5600",
+      "alone_would_cost_micro_usdc": "560000",
+      "hash_check_passed": true,
+      "audit": "recomputed, MISMATCH",
+      "tx": "2YEZVgQ3RDh2CkEcAyztTABgQEDN9u1N8N52yyW4PW4w"
+    },
+    {
+      "round": 2,
+      "buyer": "buyer-18.swarm.sandbox",
       "bought": "sha256-chain:seed=intents;rounds=600000",
       "entry": 5,
       "from": "seller-1.swarm.sandbox",
-      "price_micro_usdc": "135000",
+      "price_micro_usdc": "163500",
+      "of_which_delivery_fee_micro_usdc": "13500",
       "alone_would_cost_micro_usdc": "1350000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "8QTWYqpAuTJHxKmXMPMVyehQ7ooL5WNW3TNhrrga9GGF"
+      "tx": "HxVTZbH7MbCu6yG54PuKySMscggerLkhKKxWxbQm9Yc1"
     },
     {
-      "round": 3,
-      "buyer": "buyer-15.swarm.sandbox",
-      "bought": "collatz-max:below=300000",
-      "entry": 4,
-      "from": "seller-3.swarm.sandbox",
-      "price_micro_usdc": "83334",
-      "alone_would_cost_micro_usdc": "750000",
-      "hash_check_passed": true,
-      "audit": "recomputed, matches",
-      "tx": "GvYjPCeVfD9ETP43mzsYFWSreGstDosJsPvbLQMJiQwQ"
-    },
-    {
-      "round": 3,
-      "buyer": "buyer-16.swarm.sandbox",
+      "round": 2,
+      "buyer": "buyer-3.swarm.sandbox",
       "bought": "prime-count:below=3000000",
       "entry": 3,
       "from": "seller-2.swarm.sandbox",
-      "price_micro_usdc": "109091",
+      "price_micro_usdc": "312000",
+      "of_which_delivery_fee_micro_usdc": "12000",
       "alone_would_cost_micro_usdc": "1200000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "EkqHX82MnGCQpUAGMamMP8uaigWLFVLteAoP1fDctTxZ"
+      "tx": "H7bA6ciwJrvDp584tJ8G9Qm1W2FkhS252kgTAp31aKz3"
     },
     {
-      "round": 3,
+      "round": 2,
+      "buyer": "buyer-9.swarm.sandbox",
+      "bought": "collatz-max:below=300000",
+      "entry": 4,
+      "from": "seller-3.swarm.sandbox",
+      "price_micro_usdc": "132500",
+      "of_which_delivery_fee_micro_usdc": "7500",
+      "alone_would_cost_micro_usdc": "750000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "B1JpYfBxW13UVLrxyQ7ygyBgH5dyfDDWPFE1XsN6DT8c"
+    },
+    {
+      "round": 2,
+      "buyer": "buyer-16.swarm.sandbox",
+      "bought": "collatz-max:below=600000",
+      "entry": 2,
+      "from": "seller-4.swarm.sandbox",
+      "price_micro_usdc": "515000",
+      "of_which_delivery_fee_micro_usdc": "15000",
+      "alone_would_cost_micro_usdc": "1500000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "2yrAmHZmSZHw2nGJWo5ac5vpqHgSJvRtbKc1rLfbBdQr"
+    },
+    {
+      "round": 2,
       "buyer": "buyer-11.swarm.sandbox",
-      "bought": "prime-count:below=1500000",
-      "entry": 8,
-      "from": "buyer-13.swarm.sandbox",
-      "price_micro_usdc": "120000",
-      "alone_would_cost_micro_usdc": "600000",
+      "bought": "sha256-chain:seed=swarm;rounds=250000",
+      "entry": 1,
+      "from": "seller-5.swarm.sandbox",
+      "price_micro_usdc": "85600",
+      "of_which_delivery_fee_micro_usdc": "5600",
+      "alone_would_cost_micro_usdc": "560000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "C261oKkJmmNd2nGEoXMTF7pZeZVVqYUTdgSScyZEBygG"
+      "tx": "9dBEZdZ7kARe5WFSTUWzLdUfqb4Q2K9VxpreJfr92Mzb"
     },
     {
-      "round": 3,
-      "buyer": "buyer-18.swarm.sandbox",
+      "round": 2,
+      "buyer": "buyer-8.swarm.sandbox",
       "bought": "collatz-max:below=600000",
       "entry": 2,
       "from": "seller-4.swarm.sandbox",
-      "price_micro_usdc": "214286",
+      "price_micro_usdc": "315000",
+      "of_which_delivery_fee_micro_usdc": "15000",
       "alone_would_cost_micro_usdc": "1500000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "3QLL29ngjnWXt3N5PSnBLRywB7sgc3pgGavxeTcQWDeJ"
-    },
-    {
-      "round": 3,
-      "buyer": "buyer-20.swarm.sandbox",
-      "bought": "collatz-max:below=600000",
-      "entry": 2,
-      "from": "seller-4.swarm.sandbox",
-      "price_micro_usdc": "187500",
-      "alone_would_cost_micro_usdc": "1500000",
-      "hash_check_passed": true,
-      "audit": "recomputed, matches",
-      "tx": "2thP4DjUXBvPMQKdERVWkeFfeY5KbnArerwNemZKah6Q"
+      "tx": "8NgHeeMpGGZNw7YZRDFiSq6gu4W6G9Gp6rLnHE6x4fmA"
     },
     {
       "round": 3,
@@ -808,11 +678,220 @@
       "bought": "sha256-chain:seed=near;rounds=400000",
       "entry": 7,
       "from": "seller-4.swarm.sandbox",
-      "price_micro_usdc": "77778",
+      "price_micro_usdc": "84778",
+      "of_which_delivery_fee_micro_usdc": "7000",
       "alone_would_cost_micro_usdc": "900000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "2saDRpofSJrVSkFcqR1Bw7wNdqY9WscKjbrqfbyysA4D"
+      "tx": "D8nyxhWnMDUhQ7TuBaxWWmZerNmr57XgscuXHg5WaMwh"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-11.swarm.sandbox",
+      "bought": "prime-count:below=1500000",
+      "entry": 8,
+      "from": "buyer-18.swarm.sandbox",
+      "price_micro_usdc": "156000",
+      "of_which_delivery_fee_micro_usdc": "6000",
+      "alone_would_cost_micro_usdc": "600000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "8brT3uTf2Csj8ytUiDxq7dRNUuxQ9ZTRNPHwUt6quLMS"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-15.swarm.sandbox",
+      "bought": "collatz-max:below=300000",
+      "entry": 4,
+      "from": "seller-3.swarm.sandbox",
+      "price_micro_usdc": "101250",
+      "of_which_delivery_fee_micro_usdc": "7500",
+      "alone_would_cost_micro_usdc": "750000",
+      "hash_check_passed": true,
+      "audit": "recomputed, matches",
+      "tx": "8kCedJXzp8Bw2WUD2PovDTjDZhcYUx22QxJLkD5tuqPd"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-5.swarm.sandbox",
+      "bought": "collatz-max:below=300000",
+      "entry": 4,
+      "from": "seller-3.swarm.sandbox",
+      "price_micro_usdc": "90834",
+      "of_which_delivery_fee_micro_usdc": "7500",
+      "alone_would_cost_micro_usdc": "750000",
+      "hash_check_passed": true,
+      "audit": "recomputed, matches",
+      "tx": "68WLjNjEhaiWqCyxraoaCaKGfmGDwW3DEPZdkhWgqYoP"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-8.swarm.sandbox",
+      "bought": "orderbook-replay:market=NEAR-USDC;seed=2026-11-13;events=1500000",
+      "entry": 6,
+      "from": "seller-2.swarm.sandbox",
+      "price_micro_usdc": "520000",
+      "of_which_delivery_fee_micro_usdc": "20000",
+      "alone_would_cost_micro_usdc": "2000000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "YFvKr7QMcH7ywED9HmqJqmAE3182DvUufiJT3Uyzxu4"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-4.swarm.sandbox",
+      "bought": "prime-count:below=3000000",
+      "entry": 3,
+      "from": "seller-2.swarm.sandbox",
+      "price_micro_usdc": "121091",
+      "of_which_delivery_fee_micro_usdc": "12000",
+      "alone_would_cost_micro_usdc": "1200000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "2eutVSY8KK64Kvoh3jfzi4oNa6QVq4j8ewPG6XraZe3k"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-16.swarm.sandbox",
+      "bought": "prime-count:below=3000000",
+      "entry": 3,
+      "from": "seller-2.swarm.sandbox",
+      "price_micro_usdc": "145334",
+      "of_which_delivery_fee_micro_usdc": "12000",
+      "alone_would_cost_micro_usdc": "1200000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "GitwNEULsAPxPUVxy3duxCBpLoMUyFdYqxXXcQ4H79L2"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-17.swarm.sandbox",
+      "bought": "prime-count:below=3000000",
+      "entry": 3,
+      "from": "seller-2.swarm.sandbox",
+      "price_micro_usdc": "132000",
+      "of_which_delivery_fee_micro_usdc": "12000",
+      "alone_would_cost_micro_usdc": "1200000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "FTA952Uafr1CcpKV9ChThSxjZBzvt1wtekJFx9K8JKFi"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-12.swarm.sandbox",
+      "bought": "prime-count:below=1500000",
+      "entry": 8,
+      "from": "buyer-18.swarm.sandbox",
+      "price_micro_usdc": "126000",
+      "of_which_delivery_fee_micro_usdc": "6000",
+      "alone_would_cost_micro_usdc": "600000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "AfmTjN7kncfnXvzSWEGeVgwZqC9yfc2osAzt7FHroQ89"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-20.swarm.sandbox",
+      "bought": "collatz-max:below=600000",
+      "entry": 2,
+      "from": "seller-4.swarm.sandbox",
+      "price_micro_usdc": "265000",
+      "of_which_delivery_fee_micro_usdc": "15000",
+      "alone_would_cost_micro_usdc": "1500000",
+      "hash_check_passed": true,
+      "audit": "recomputed, matches",
+      "tx": "Ag2XVFkJgJhLgJx8N4LChzNGZHDbEDeSR5mSum7Y9cXc"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-13.swarm.sandbox",
+      "bought": "collatz-max:below=300000",
+      "entry": 4,
+      "from": "seller-3.swarm.sandbox",
+      "price_micro_usdc": "114643",
+      "of_which_delivery_fee_micro_usdc": "7500",
+      "alone_would_cost_micro_usdc": "750000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "DyGUwGHc4BRkzfkZo3eZdhQLtw2zv4KNfPkHNFHvtdgG"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-14.swarm.sandbox",
+      "bought": "sha256-chain:seed=intents;rounds=600000",
+      "entry": 5,
+      "from": "seller-1.swarm.sandbox",
+      "price_micro_usdc": "148500",
+      "of_which_delivery_fee_micro_usdc": "13500",
+      "alone_would_cost_micro_usdc": "1350000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "C85KLVNaTFbaJ4ktqUeootZzTaNK84hjFz9UC6yosFF5"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-18.swarm.sandbox",
+      "bought": "collatz-max:below=600000",
+      "entry": 2,
+      "from": "seller-4.swarm.sandbox",
+      "price_micro_usdc": "229286",
+      "of_which_delivery_fee_micro_usdc": "15000",
+      "alone_would_cost_micro_usdc": "1500000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "HCMaKQDGVnayHp2T6j4vM338WByBKiUNx3xV6KPgDvpy"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-2.swarm.sandbox",
+      "bought": "orderbook-replay:market=NEAR-USDC;seed=2026-11-13;events=1500000",
+      "entry": 6,
+      "from": "seller-2.swarm.sandbox",
+      "price_micro_usdc": "686667",
+      "of_which_delivery_fee_micro_usdc": "20000",
+      "alone_would_cost_micro_usdc": "2000000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "BsVB13xdBffUzfeZmqGWPzxD4tf2KaBFZuoKDUKZKzw5"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-19.swarm.sandbox",
+      "bought": "orderbook-replay:market=NEAR-USDC;seed=2026-11-13;events=1500000",
+      "entry": 6,
+      "from": "seller-2.swarm.sandbox",
+      "price_micro_usdc": "420000",
+      "of_which_delivery_fee_micro_usdc": "20000",
+      "alone_would_cost_micro_usdc": "2000000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "FNSAK7a7Q3uf1vMPKLxfRbmTwRSbEPyQniw8kZQzQ8sh"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-6.swarm.sandbox",
+      "bought": "collatz-max:below=600000",
+      "entry": 2,
+      "from": "seller-4.swarm.sandbox",
+      "price_micro_usdc": "202500",
+      "of_which_delivery_fee_micro_usdc": "15000",
+      "alone_would_cost_micro_usdc": "1500000",
+      "hash_check_passed": true,
+      "audit": "not audited",
+      "tx": "JAahfTW9BgHSFsMZR1MbT8H7JAhrE4a69fU3L6cUpiZM"
+    },
+    {
+      "round": 3,
+      "buyer": "buyer-10.swarm.sandbox",
+      "bought": "prime-count:below=3000000",
+      "entry": 3,
+      "from": "seller-2.swarm.sandbox",
+      "price_micro_usdc": "162000",
+      "of_which_delivery_fee_micro_usdc": "12000",
+      "alone_would_cost_micro_usdc": "1200000",
+      "hash_check_passed": true,
+      "audit": "recomputed, matches",
+      "tx": "3F1S9NtDs5cFnxpk9FVvkTJCWsDju8Ts74dKe77Eiz7J"
     },
     {
       "round": 3,
@@ -821,10 +900,11 @@
       "entry": 9,
       "from": "computed it itself, then published",
       "price_micro_usdc": "560000",
+      "of_which_delivery_fee_micro_usdc": "0",
       "alone_would_cost_micro_usdc": "560000",
       "hash_check_passed": true,
       "audit": "own work",
-      "tx": "Bx8fKdgbcgk1C9HWx3Xjdr88qjrAUKyHNo7xCJWt9767"
+      "tx": "A9MFJtAbJeRagrV53kx1jgHtKFUPVi5WvPhcFf86vwJi"
     },
     {
       "round": 3,
@@ -832,11 +912,12 @@
       "bought": "sha256-chain:seed=swarm;rounds=250000",
       "entry": 9,
       "from": "buyer-7.swarm.sandbox",
-      "price_micro_usdc": "280000",
+      "price_micro_usdc": "285600",
+      "of_which_delivery_fee_micro_usdc": "5600",
       "alone_would_cost_micro_usdc": "560000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "FDeeuaC1DfZ5h6ysFWcVTqPQPDb1edRFZYnDARpQC9QL"
+      "tx": "Cz8Y7yKdc9TaPuJHRTX1FKgFC3eb6s2xe4Yn4nHjT8US"
     },
     {
       "round": 3,
@@ -844,11 +925,12 @@
       "bought": "sha256-chain:seed=swarm;rounds=250000",
       "entry": 9,
       "from": "buyer-7.swarm.sandbox",
-      "price_micro_usdc": "186667",
+      "price_micro_usdc": "192267",
+      "of_which_delivery_fee_micro_usdc": "5600",
       "alone_would_cost_micro_usdc": "560000",
       "hash_check_passed": true,
       "audit": "not audited",
-      "tx": "D3CHswN69bQiB4jBPgfK3mxcSbnL6V4twXiZ67TiUQVv"
+      "tx": "FAtrQ5F5WTEuXGb54nuAknFkJFmFAPvynmQBXtH6B43G"
     }
   ],
   "events": [
@@ -866,7 +948,7 @@
     },
     {
       "round": 0,
-      "text": "seller-4 published entry 2 \"collatz-max:below=600000\" at $1.5000"
+      "text": "seller-2 published entry 3 \"prime-count:below=3000000\" at $1.2000"
     },
     {
       "round": 0,
@@ -874,7 +956,7 @@
     },
     {
       "round": 0,
-      "text": "seller-2 published entry 3 \"prime-count:below=3000000\" at $1.2000"
+      "text": "seller-4 published entry 2 \"collatz-max:below=600000\" at $1.5000"
     },
     {
       "round": 0,
@@ -886,7 +968,7 @@
     },
     {
       "round": 1,
-      "text": "buyer-13 published entry 8 \"prime-count:below=1500000\" at $0.6000"
+      "text": "buyer-18 published entry 8 \"prime-count:below=1500000\" at $0.6000"
     },
     {
       "round": 1,
@@ -914,7 +996,7 @@
     },
     {
       "round": 2,
-      "text": "end of round 2: 39 joins, $10.9875 paid in, $11.2675 rebated or refunded"
+      "text": "end of round 2: 39 joins, $10.9875 paid in, $11.3011 rebated or refunded"
     },
     {
       "round": 3,
@@ -922,7 +1004,7 @@
     },
     {
       "round": 3,
-      "text": "end of round 3: 58 joins, $14.9521 paid in, $15.2321 rebated or refunded"
+      "text": "end of round 3: 58 joins, $14.9521 paid in, $15.2657 rebated or refunded"
     }
   ],
   "problems": []

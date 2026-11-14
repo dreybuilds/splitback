@@ -1,8 +1,10 @@
 // The one-minute story, on a real chain.
 //
 // A trading agent pays a provider 12 for a reproducible order-book replay it
-// would otherwise keep to itself. A second agent buys in for 6. A third buys in
-// for 4, and the first two each get 2 back. Every buyer ends up paying 4.
+// would otherwise keep to itself. A third agent with a budget of 4 looks, sees a
+// price of 6, and does not buy. A second agent buys in for 6. Now the price is 4,
+// so the third buys in, and the first two each get 2 back. Every buyer ends up
+// paying 4.
 //
 //   node pitch.mjs            local sandbox
 //   node pitch.mjs --testnet  NEAR testnet
@@ -30,7 +32,7 @@ const SB = `splitback.${root}`;
 const USDC = `usdc.${root}`;
 const v = (method, args) => view(rpcUrl, SB, method, args);
 
-await createAccount(human(net.parentId), root, TESTNET ? 12n * 10n ** 24n : net.nearRoot, [humanPk]);
+await createAccount(human(net.parentId), root, TESTNET ? 9n * 10n ** 24n : net.nearRoot, [humanPk]);
 await createAccount(human(root), SB, net.nearContract.splitback, [humanPk]);
 await createAccount(human(root), USDC, net.nearContract.usdc, [humanPk]);
 await deploy(human(USDC), readFileSync(join(WASM, "mock_usdc.wasm")), "new", {});
@@ -81,30 +83,67 @@ const deliver = async (entry, who) =>
 
 const pub = await call(agents["desk-a"].acct, SB, "publish", {
   task_key: taskKey(manifest), spec: manifest, result_hash: resultHash,
-  cost: (12n * UNIT).toString(), provider: agents["replay-provider"].id,
+  cost: (12n * UNIT).toString(), provider: agents["replay-provider"].id, delivery_fee: null,
 });
 const entry = pub.value;
 log(`\n1. desk-a pays replay-provider 12 for "${manifest}"`);
 log(`   on chain: input manifest + result hash ${resultHash.slice(0, 16)}...  (tx ${pub.txHash})`);
 await table("after step 1");
 
-// 2. desk-b buys in.
-const j1 = await call(agents["desk-b"].acct, SB, "join", { entry_id: entry, max_price: (6n * UNIT).toString() });
-await call(agents["desk-a"].acct, SB, "claim", { entry_id: entry });
-log(`\n2. desk-b buys in for ${credits(j1.value)}; desk-a claims ${credits(6n * UNIT)} back  (tx ${j1.txHash})`);
-const gotB = await deliver(entry, "desk-b");
-log(`   replay delivered to desk-b, sha256 matches the chain: ${sha256hex(gotB) === resultHash}`);
-await table("after step 2");
+const link = (hash) => (TESTNET ? `https://testnet.nearblocks.io/txns/${hash}` : `tx ${hash}`);
+log(`   payment to provider: ${link(pub.txHash)}`);
 
-// 3. desk-c buys in.
-const j2 = await call(agents["desk-c"].acct, SB, "join", { entry_id: entry, max_price: (4n * UNIT).toString() });
-const ca = await call(agents["desk-a"].acct, SB, "claim", { entry_id: entry });
-const cb = await call(agents["desk-b"].acct, SB, "claim", { entry_id: entry });
-log(`\n3. desk-c buys in for ${credits(j2.value)}; desk-a gets ${credits(ca.value)} back, desk-b gets ${credits(cb.value)} back  (tx ${j2.txHash})`);
-const gotC = await deliver(entry, "desk-c");
-log(`   replay delivered to desk-c, sha256 matches the chain: ${sha256hex(gotC) === resultHash}`);
-log(`   lurker asks for the replay without paying: ${(await deliver(entry, "lurker")) === null ? "refused" : "SERVED (bug)"}`);
+// An agent buys only if the quote fits what its owner gave it. It passes the lower
+// of the quote and its remaining budget as max_price, so the contract enforces
+// the same limit even if the price moves between the quote and the purchase.
+async function tryToBuy(name) {
+  const quote = BigInt(await v("quote", { entry_id: entry }));
+  const budget = BigInt(await v("balance_of", { account_id: agents[name].id }));
+  if (quote > budget) {
+    log(`   ${name}: quote is ${credits(quote)}, budget is ${credits(budget)}. Does not buy. Nothing spent, no transaction sent.`);
+    return null;
+  }
+  const maxPrice = quote < budget ? quote : budget;
+  const res = await call(agents[name].acct, SB, "join", { entry_id: entry, max_price: maxPrice.toString() });
+  log(`   ${name}: quote is ${credits(quote)}, budget is ${credits(budget)}. Buys in for ${credits(res.value)} with max_price ${credits(maxPrice)}.`);
+  log(`   join: ${link(res.txHash)}`);
+  const bytes = await deliver(entry, name);
+  log(`   replay delivered to ${name}, sha256 matches the chain: ${sha256hex(bytes) === resultHash}`);
+  return res;
+}
+async function claimFor(name) {
+  const res = await call(agents[name].acct, SB, "claim", { entry_id: entry });
+  log(`   ${name} claims ${credits(res.value)} back: ${link(res.txHash)}`);
+}
+
+// 2. desk-c has a budget of 4. The replay costs 6 right now. It waits.
+log("\n2. desk-c wants the replay but its owner gave it 4");
+await tryToBuy("desk-c");
+await table("after step 2 (unchanged)");
+
+// 3. desk-b buys in. That halves desk-a's cost and lowers the next quote to 4.
+log("\n3. desk-b buys in");
+await tryToBuy("desk-b");
+await claimFor("desk-a");
 await table("after step 3");
+
+// 4. Now the quote fits desk-c's budget.
+log("\n4. desk-c looks again");
+await tryToBuy("desk-c");
+await claimFor("desk-a");
+await claimFor("desk-b");
+log(`   lurker asks for the replay without paying: ${(await deliver(entry, "lurker")) === null ? "refused" : "SERVED (bug)"}`);
+await table("after step 4");
+
+// When is reuse worth it? Time the real work against checking a delivered copy.
+const t0 = performance.now();
+compute(manifest);
+const fromScratch = performance.now() - t0;
+const t1 = performance.now();
+const verified = sha256hex(store.get(resultHash)) === resultHash;
+const checkCopy = performance.now() - t1;
+log(`\nmeasured on this machine: replaying ${manifest.split("events=")[1]} events from scratch took ${fromScratch.toFixed(0)} ms;`);
+log(`hash-checking the delivered replay took ${checkCopy.toFixed(2)} ms (matches: ${verified}).`);
 
 const e = await v("get_entry", { entry_id: entry });
 const net3 = {};
@@ -124,3 +163,4 @@ if (!ok) {
   process.exit(1);
 }
 log("\nPITCH CHECK PASSED: provider earned 12, every buyer paid 4.");
+process.exit(0);

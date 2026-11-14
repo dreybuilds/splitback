@@ -16,15 +16,18 @@ You need Node.js 20 or newer. Rust is only needed for step 1.
 
 | # | Do | See |
 |---|---|---|
-| 1 | `cargo test -p splitback` | `test result: ok. 25 passed`. The tests cover the rules in RULES.md, including the 12 → 6 → 4 story and the refund path. |
+| 1 | `cargo test -p splitback` | `test result: ok. 29 passed`. The tests cover the rules in RULES.md, including the 12 → 6 → 4 story and the refund path. |
 | 2 | `cd sim && npm install` | Dependencies install. The first run in step 3 also downloads a local NEAR node binary. |
-| 3 | `npm run pitch` | A local NEAR sandbox starts, the contracts in `res/` are deployed, and three trading agents buy one replay. Last line: `PITCH CHECK PASSED: provider earned 12, every buyer paid 4.` |
+| 3 | `npm run pitch` | A local NEAR sandbox starts, the contracts in `res/` are deployed, and three trading agents buy one replay. One of them has a budget of 4, sees a price of 6 and does not buy; after another agent joins the price is 4 and it buys. Every payment prints its transaction hash. Last line: `PITCH CHECK PASSED: provider earned 12, every buyer paid 4.` |
 | 4 | `npm run sim` | 20 buyers, 5 sellers and 3 verifiers trade for 3 rounds with scripted strategies and no LLM calls. One seller publishes a wrong result, the verifiers vote 2 to 1, and the seller is slashed. Last line: `ALL CHECKS PASSED: every holder paid exactly ceil(cost / holders), refunds were complete, the contract is solvent.` Takes about 80 seconds. |
 | 5 | Open `sim/out/receipts.json` | One receipt per purchase: what was bought, from whom, the price, what it would have cost alone, and whether the result passed the buyer's check. |
-| 6 | `node ../intents/quote.mjs` | Two dry NEAR Intents quotes from the live 1Click API: funding an agent from USDC on Base, and cashing out. Nothing is sent. |
+| 6 | `node ../intents/quote.mjs` | Dry NEAR Intents quotes from the live 1Click API: funding an agent from USDC, USDT or DAI on several chains, and cashing out. Nothing is sent. `--list` shows every stablecoin and chain that can be used. |
+| 6b | `npm run fund` | Three agents are funded from USDC, USDT and DAI, buy the same result and each end up paying the same. The provider cashes out in USDT. Last line: `FUNDING CHECK PASSED`. |
 | 7 | Optional, needs a NEAR AI Cloud key: `NEAR_AI_API_KEY=... npm run judge` | Two written briefs are sold, one written from tampered figures. Three verifier agents, each backed by a different model on NEAR AI Cloud, vote on chain. The tampered brief is voided. Each model answer's NEAR AI signature is saved to `sim/out/judgements.json`. |
 
 Steps 3 and 4 exit with a non-zero code if any rule is broken, so they work as checks.
+
+[GUIDE.md](GUIDE.md) goes further: which example shows what, every contract call for one entry (`npm run walkthrough`), a call reference, how to add your own task, and how each use case below maps onto a spec and a verifier.
 
 `./build.sh` rebuilds the contracts with cargo-near and refreshes `res/`. Steps 3, 4 and 7 use the prebuilt files in `res/`, so they run without Rust. Step 7 makes real model calls, so its outcome is not guaranteed the way steps 3 and 4 are.
 
@@ -49,6 +52,23 @@ curl -s https://test.rpc.fastnear.com -H 'content-type: application/json' -d '{"
 ```
 
 It prints `{"entries":10,"joins":58,"voided":1,...}`.
+
+### The three-buyer story, on testnet
+
+`npm run pitch:testnet` ran against `splitback.pmwg2rpww.splitback-swarm5.testnet`. Each step is a transaction you can open:
+
+| Step | Transaction |
+|---|---|
+| desk-a pays the provider 12 and publishes | [EgiDHFeBDzLS…](https://testnet.nearblocks.io/txns/EgiDHFeBDzLSRWNggX8g7tkiwYMhshchC3YLZ3c4Jq9k) |
+| desk-b buys in for 6 | [3bcsVhosrWgP…](https://testnet.nearblocks.io/txns/3bcsVhosrWgPdHBgeRo86MJC7K6Pctw41Kwr4cYp8bmh) |
+| desk-a claims 6 back | [CBS5ojGEYzdw…](https://testnet.nearblocks.io/txns/CBS5ojGEYzdwbBZxosPqoBue2b3sAYkmQ2imF66re7v3) |
+| desk-c buys in for 4 | [DQiQeMeyc8Si…](https://testnet.nearblocks.io/txns/DQiQeMeyc8SiMcHQzp6q1wjcdMo8iQXxpBqadz5hMae8) |
+| desk-a claims 2 back | [HtG8wQXetK9Q…](https://testnet.nearblocks.io/txns/HtG8wQXetK9Qzn97JXNFsSM8ngwhRf74NuJZiL5r8jRn) |
+| desk-b claims 2 back | [n2ANyXAS2wBT…](https://testnet.nearblocks.io/txns/n2ANyXAS2wBTuGqHwaXXEcFRZp1Z9S1F1U5evXMWw3k) |
+
+Between the first two rows, desk-c (budget 4) looked at a price of 6 and did not buy, so there is no transaction for it. Net paid at the end: desk-a 4, desk-b 4, desk-c 4. The provider holds 12. Full transcript: [`sim/samples/pitch.testnet.txt`](sim/samples/pitch.testnet.txt).
+
+The same run timed the work: replaying the 1,500,000-event book from scratch took 345 ms on a laptop, and hash-checking a delivered copy took under a millisecond. This replay is deliberately small so the demo is quick. The saving that matters is the price of the work, not these milliseconds.
 
 To run it on testnet yourself: `cd sim && node faucet.mjs && npm run sim:testnet`. The faucet script creates a funded testnet account and saves its key to `sim/keys/testnet.json`, which is git-ignored.
 
@@ -95,6 +115,8 @@ Each of these is expensive to produce, exactly reproducible from a public manife
 | **Reproducible builds** of a pinned commit | Agents that deploy or audit the same dependency | Rebuild and compare the artifact hash |
 | **Benchmark runs** of a pinned model, seed and test set | Agents choosing which model to route work to | Re-run a sample at the pinned settings |
 
+Only the order-book replay has a runnable example. [GUIDE.md](GUIDE.md#6-fitting-the-readmes-use-cases) sketches the spec, result and verifier for each of the others.
+
 The first four fit the current contract as it is. The last two need care about what "the same result" means, and benchmark runs are only reproducible if the model provider guarantees it.
 
 Work whose correctness is a matter of judgement (research summaries, recommendations) has nothing mechanical to check. For that, the verifiers can be models: see "Where NEAR AI fits" below.
@@ -107,6 +129,7 @@ Work whose correctness is a matter of judgement (research summaries, recommendat
 | `contracts/mock-usdc` | A test token with free minting, so the demo runs without a faucet. Not a real stablecoin. The contract takes any NEP-141 token id at init. |
 | `sim/run.mjs` | The scripted market. |
 | `sim/pitch.mjs` | The three-buyer story. |
+| `sim/walkthrough.mjs` | One entry from publish to withdraw, printing every contract call. [GUIDE.md](GUIDE.md) follows its output. |
 | `sim/judge.mjs` | The NEAR AI verifier committee for work that cannot be recomputed. |
 | `intents/quote.mjs` | NEAR Intents quotes and a guided live top-up. |
 | `web/` | The live page. |
@@ -125,6 +148,7 @@ Each agent is a sub-account under one parent (`buyer-7.<parent>`, `seller-2.<par
 
 Intents is used at the two edges, not for each purchase.
 
+- **Pay in any stablecoin.** The contract settles in one token, USDC on NEAR, so every price, rebate and bond is in one unit. The owner does not have to hold that token. 1Click lists USDC, USDT, DAI and others across more than 20 chains, swaps what the owner sends, and delivers USDC. `node intents/quote.mjs --from usdt:eth` quotes any of them. A stablecoin sent straight to the contract without a swap is refused and returned.
 - **Funding in one step.** The contract credits a prepaid balance when it receives tokens by `ft_transfer_call` with the agent's account id as the message. The 1Click quote field `customRecipientMsg` makes 1Click deliver exactly that way. So an owner holding USDC on Base sends once to a 1Click deposit address, and the money lands inside Splitback already credited to the agent.
 - **Cash-out.** A seller's earnings go the other way to whatever chain it wants.
 - **Not per purchase.** At the time of writing a 1Click quote for Base to NEAR estimates about 35 seconds, and the docs say to allow up to 15 minutes. A purchase inside Splitback is one NEAR transaction with no token transfer, because prices are debited from prepaid balances.
@@ -133,6 +157,8 @@ What is and is not done here:
 
 - `intents/quote.mjs` gets real quotes from the live API in dry mode, including one with `customRecipientMsg` set. The API accepts the field. Actual delivery into the contract has not been exercised, and the 1Click docs mark the field as highly experimental.
 - NEAR Intents has no testnet, so the testnet deployment uses the test token and is not connected to a live Intents transfer.
+- `sim/fund.mjs` tests everything around the swap on testnet. Test tokens stand in for USDT and DAI on Ethereum, a `solver` account stands in for 1Click, and the rate comes from a real dry quote on the live API for that exact pair. The delivery by `ft_transfer_call`, the credit to the named agent and the agent spending that balance are the real contract. In the recorded run ([`sim/samples/funding.testnet.json`](sim/samples/funding.testnet.json)) 20 USDT was credited as $19.9783, 200 DAI as $199.5837, both agents then bought the same result as an agent funded in USDC, and the provider cashed $30 out as 29.7166 USDT. Example delivery: [`BPLwNGqc…`](https://testnet.nearblocks.io/txns/BPLwNGqcuyKTksK4jrvSAp6xoPhpkZRt7cENmiZKu2g8).
+- Small amounts can be refused. At the time of writing DAI had no route for 1 DAI but quoted at 200, USDT on Tron had a $100 minimum, and cashing 1 USDC out to Ethereum returned about 0.70 because of gas.
 - `node intents/quote.mjs --live` walks through one real top-up on mainnet.
 - Quotes and status need no API key. Without a partner key 1Click adds 0.25%; with one, a stablecoin pair such as USDC to USDC costs 0.01%.
 
@@ -154,6 +180,7 @@ A recorded run is in [`sim/samples/judgements.sample.json`](sim/samples/judgemen
 | Frivolous challenge | The stake goes to the publisher, less the verifiers' tenth. |
 | Publisher never serves the bytes | Treated as a challenge: no bytes matching the hash means it is upheld. |
 | A holder leaks the result | Not prevented. The holder loses its future rebates. |
+| The price moves before an agent's purchase lands | The agent passes `max_price`, the lower of the quote it saw and its remaining budget. The contract rejects the join if the total is higher, and nothing is spent. |
 | Publisher overstates the cost | A competitor publishes the same task for less and takes the buyers. If the publisher names a provider, the cost is a payment the chain saw. |
 | Publisher did not do the work itself | Not detected. |
 | One verifier is dishonest or lazy | It is outvoted and earns nothing. The simulation includes one. |
@@ -167,7 +194,9 @@ A recorded run is in [`sim/samples/judgements.sample.json`](sim/samples/judgemen
 |---|---|
 | Who rules on challenges | A committee with a majority threshold, paid only for voting with the outcome. The committee is fixed at deployment and its members post no bond, so a colluding majority is not punished. |
 | Work that cannot be recomputed | The contract does not care how verifiers decide. `sim/judge.mjs` runs a committee of NEAR AI models on written briefs. Models can be wrong, and three models can be wrong together. |
-| Storage | The contract pays for its own storage. A join costs tokens, which limits spam, but there is no separate storage charge. |
+| What the split covers | The declared cost of the work, split equally, plus an optional flat delivery fee per buyer that pays the publisher for storing and serving the bytes. Not covered: each agent's own NEAR gas, and the contract's storage, which the contract pays. |
+| The cost is declared | The contract cannot measure compute. Naming a provider makes the cost a payment the chain saw; a cheaper competing entry is the other check. |
+| No profit for the first buyer | The provider is paid once. The first buyer only ever gets closer to an equal share, plus delivery fees if it set one. |
 | Locked bond | A bond of twice the cost stays locked until the publisher retires the entry and the challenge window passes. That is the price of making buyers whole. |
 | Leaks | A holder can still pass the bytes on. The rebate makes that cost the holder money; nothing prevents it. |
 | Audit | The contracts are unaudited and hold only test tokens. |
@@ -176,6 +205,5 @@ A recorded run is in [`sim/samples/judgements.sample.json`](sim/samples/judgemen
 
 - Libraries: [near-sdk](https://github.com/near/near-sdk-rs) (contracts), [near-api-js](https://github.com/near/near-api-js) and [near-sandbox](https://github.com/near/near-sandbox-js) (simulation), [ethers](https://github.com/ethers-io/ethers.js) (checking NEAR AI signatures).
 - Services: NEAR Intents 1Click API, NEAR AI Cloud.
-- Code was written with Claude Code (AI-generated, human-directed) during the hackathon window. No earlier code was reused.
 
 MIT licence.
