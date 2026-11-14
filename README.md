@@ -37,17 +37,17 @@ The full simulation ran on NEAR testnet and passed every check.
 
 | | |
 |---|---|
-| Contract | [`splitback.smwg0fyby.splitback-swarm5.testnet`](https://testnet.nearblocks.io/address/splitback.smwg0fyby.splitback-swarm5.testnet) |
-| Test token | `usdc.smwg0fyby.splitback-swarm5.testnet` |
-| Agents | 28 sub-accounts under `smwg0fyby.splitback-swarm5.testnet`: `buyer-1` to `buyer-20`, `seller-1` to `seller-5`, `verifier-1` to `verifier-3` |
+| Contract | [`splitback.smwgbt9yi.splitback-swarm5.testnet`](https://testnet.nearblocks.io/address/splitback.smwgbt9yi.splitback-swarm5.testnet) |
+| Test token | `usdc.smwgbt9yi.splitback-swarm5.testnet` |
+| Agents | 28 sub-accounts under `smwgbt9yi.splitback-swarm5.testnet`: `buyer-1` to `buyer-20`, `seller-1` to `seller-5`, `verifier-1` to `verifier-3` |
 | Activity | 10 entries, 58 joins, 1 entry voided by a 2 to 1 verifier vote |
-| Example purchase | [`2SCNz9HhDCUQoeY4sWLBarXoY8adSEpU6f8vW8yXJE4p`](https://testnet.nearblocks.io/txns/2SCNz9HhDCUQoeY4sWLBarXoY8adSEpU6f8vW8yXJE4p) |
+| Example purchase | [`CnX4rY7skLwvRW811ZsesXw1cieUfnHPzW6BStrCdnkr`](https://testnet.nearblocks.io/txns/CnX4rY7skLwvRW811ZsesXw1cieUfnHPzW6BStrCdnkr) |
 | Full record | [`web/data/run.json`](web/data/run.json): every receipt with its transaction hash |
 
 Read the live state yourself, with no key:
 
 ```sh
-curl -s https://test.rpc.fastnear.com -H 'content-type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"query","params":{"request_type":"call_function","finality":"final","account_id":"splitback.smwg0fyby.splitback-swarm5.testnet","method_name":"get_stats","args_base64":"e30="}}' \
+curl -s https://test.rpc.fastnear.com -H 'content-type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"query","params":{"request_type":"call_function","finality":"final","account_id":"splitback.smwgbt9yi.splitback-swarm5.testnet","method_name":"get_stats","args_base64":"e30="}}' \
   | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(Buffer.from(JSON.parse(s).result.result).toString()))'
 ```
 
@@ -81,7 +81,7 @@ Numbers from the testnet run above. Buyers' needs are seeded, so the amount paid
 | Agents | 20 buyers, 5 sellers, 3 verifiers, each its own sub-account |
 | Purchases | 58 joins across 10 entries, 60 receipts |
 | Cost if every agent had computed alone | $69.57 |
-| Cost paid through Splitback | $9.56 (86.25% less) |
+| Cost paid through Splitback | $10.16 (85.39% less), of which $0.60 was delivery fees to publishers |
 | Wrong result | seller-5 published one, an auditing buyer recomputed it and challenged, two verifiers upheld it and one lazy verifier was outvoted and earned nothing from that ruling |
 | Outcome | every buyer of the bad entry refunded in full; seller-5 lost its bond |
 | Undercutting | seller-4 republished seller-1's task at a lower cost and took all the buyers |

@@ -13,7 +13,7 @@ Have three things open:
 
 1. A terminal in `sim/`, font large enough to read on a small video.
 2. The live page (`web/index.html` through GitHub Pages or `cd web && python3 -m http.server`).
-3. The testnet contract on the explorer: https://testnet.nearblocks.io/address/splitback.smwg0fyby.splitback-swarm5.testnet
+3. The testnet contract on the explorer: https://testnet.nearblocks.io/address/splitback.smwgbt9yi.splitback-swarm5.testnet
 
 `npm run sim` takes about 80 seconds. Do not run it live. Show the page, which is the recorded testnet run of the same thing.
 
@@ -25,7 +25,7 @@ Have three things open:
 | 0:20 | The Cost simulator beside the headline. Original cost 12. Move holders 1, then 2, then 3. | "One agent pays 12 for a replay. A second agent needs it, and buys in for 6. A third buys in for 4, and the contract pays the first two back 2 each. Every buyer has now paid 4. It does not matter who came first." |
 | 0:40 | Keep dragging the slider up to about 10. | "Every new buyer lowers the price for everyone, including the ones who already paid. The first buyer took the risk, and gets money back each time someone else needs the same thing. The provider was paid in full, once, at the start." |
 | 0:55 | Terminal: `npm run pitch`. Let it scroll, stop on the last lines. | "Here it is on a real chain. Three trading agents, one replay. Only the input manifest and the hash of the result go on chain. The result itself is delivered off chain, and only to accounts the contract lists as holders. This fourth account never paid, asks for it, and is refused." |
-| 1:25 | The page: Run results. | "This is a bigger run on NEAR testnet. Twenty buyers, five sellers, three verifiers, each agent its own account with a key that can only call this contract. Computed alone, the work would have cost 69 dollars 57. Through Splitback they paid 9 dollars 56. That is 86 percent less." |
+| 1:25 | The page: Run results. | "This is a bigger run on NEAR testnet. Twenty buyers, five sellers, three verifiers, each agent its own account with a key that can only call this contract. Computed alone, the work would have cost 69 dollars 57. Through Splitback they paid 10 dollars 16, delivery fees included. That is 85 percent less." |
 | 1:45 | Scroll to Compute entries. Point at one step chart, then the voided card. | "Each card is one result. The chart is the price falling as holders joined. This one is different: seller-5 published a wrong result." |
 | 1:55 | Round activity: click Round 2 to expand it. Then scroll to Challenge outcome. | "A buyer recomputed it, found the hash did not match, and challenged it. Three verifier agents voted, two to one. The entry was voided, every buyer was refunded in full, and the seller lost its bond. Publishing a bad result costs more than the result was worth." |
 | 2:15 | Purchase receipts table. Click one transaction link so the explorer opens. | "Every purchase is a receipt with a transaction you can open. None of this is mocked." |
