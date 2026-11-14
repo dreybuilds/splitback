@@ -97,61 +97,81 @@
     const dot = $("#dot");
     let text;
     if (state.liveOk) { dot.className = "dot live"; text = "Live chain data"; }
-    else if (!state.cfg?.rpcUrl) { dot.className = "dot bundled"; text = "Bundled run data (no deployment configured)"; }
-    else if (!state.liveTried) { dot.className = "dot loading"; text = "Loading chain data"; }
-    else { dot.className = "dot bundled"; text = "Bundled run data (RPC not reachable)"; }
+    else if (state.cfg?.rpcUrl && !state.liveTried) { dot.className = "dot loading"; text = "Checking chain"; }
+    else { dot.className = "dot bundled"; text = state.run ? "Recorded run" : "Data unavailable"; }
     $("#status").textContent = text;
   };
 
   // ---------- mechanism ----------
+  function costChart(shares) {
+    const chart = svg("svg", { viewBox: "0 0 400 158", role: "img", "aria-label": "Cost per holder at each join: " + shares.map(v => "$" + plain(v)).join(", ") });
+    const baseline = 131;
+    const slot = 374 / shares.length;
+    const width = Math.min(82, slot * 0.62);
+    const depth = Math.min(11, slot * 0.19);
+    const caption = (x, y, value, cls) => {
+      const node = svg("text", { x, y, class: cls, "text-anchor": "middle" });
+      node.textContent = value;
+      chart.append(node);
+    };
+    for (const y of [25, 60, 95, baseline]) {
+      chart.append(svg("line", { x1: 0, x2: 400, y1: y, y2: y, class: "guide" }));
+    }
+    shares.forEach((share, index) => {
+      const x = 12 + slot * (index + 0.5) - width / 2 - depth / 2;
+      const y = baseline - Number(share) / Number(shares[0]) * 91;
+      const right = x + width, top = y - depth * 0.65;
+      const group = svg("g", { class: index === shares.length - 1 ? "current-bar" : "past-bar" });
+      const title = svg("title");
+      title.textContent = `Holder ${index + 1} paid $${plain(share)} on joining`;
+      group.append(title,
+        svg("rect", { class: "front", x, y, width, height: baseline - y }),
+        svg("polygon", { class: "cap", points: `${x},${y} ${x+depth},${top} ${right+depth},${top} ${right},${y}` }),
+        svg("polygon", { class: "edge", points: `${right},${y} ${right+depth},${top} ${right+depth},${baseline-depth*0.65} ${right},${baseline}` }));
+      chart.append(group);
+      if (index === 0 || index === shares.length - 1 || (shares.length <= 5 && plain(share).length <= 6)) {
+        const middle = Math.max(44, Math.min(356, x + width / 2 + depth / 2));
+        caption(middle, top - 9, "$" + plain(share), "chart-value");
+        caption(middle, 151, "Holder " + (index + 1), "chart-label");
+      }
+    });
+    return chart;
+  }
+
   const renderMechanism = () => {
-    const cNum = Math.min(100000, Math.max(0.000001, Number($("#mc").value) || 12));
-    const C = BigInt(Math.round(cNum * 1e6));
-    const kNum = Number($("#mk").value);
-    const k = BigInt(kNum);
-    $("#mkOut").textContent = kNum;
-
-    const share = (j) => ceilDiv(C, BigInt(j));
-    const chain = $("#mChain");
-    chain.replaceChildren();
-    for (let j = 1; j <= kNum; j++) {
-      if (j > 1) chain.append(h("span", { class: "arrow" }, " → "));
-      chain.append(h("span", { class: j === kNum ? "last" : null }, plain(share(j))));
+    const input = $("#mc");
+    const k = Number($("#mk").value);
+    $("#mkOut").textContent = k;
+    $("#mkDown").disabled = k === 1;
+    $("#mkUp").disabled = k === 20;
+    if (!input.value || !input.validity.valid) {
+      $("#mBars").replaceChildren();
+      $("#mChain").textContent = "—";
+      $("#mRead").textContent = "Enter a cost between $0.000001 and $100000.";
+      return;
     }
-
-    const net = share(kNum);
-    const back = kNum > 1 ? share(kNum - 1) - net : null;
-    const rows = [
-      [kNum === 1 ? "The first buyer paid" : `Buyer ${kNum} paid`, plain(net)],
-      [kNum > 1 ? `Each of the ${kNum - 1} earlier holder${kNum > 2 ? "s" : ""} got back` : "Earlier holders got back", back == null ? "none yet" : plain(back)],
-      ["Every holder has paid net", plain(net)],
-      ["The next buyer would pay", plain(ceilDiv(C, k + 1n))],
-      ["The provider earned", plain(C)],
-    ];
-    $("#mRead").replaceChildren(h("dl", null, rows.map(([a, b]) => [h("dt", null, a), h("dd", null, b)])));
-
-    const bars = $("#mBars");
-    bars.replaceChildren();
-    for (let j = 1; j <= kNum; j++) {
-      const first = Number(share(j)) / Number(C);
-      const now = Number(net) / Number(share(j));
-      bars.append(h("div", { class: "bar", style: `height:${Math.max(2, first * 100)}%`, title: `Holder ${j}: paid ${plain(share(j))} at first, ${plain(net)} net` },
-        h("i", { style: `height:${now * 100}%` })));
-    }
+    const cost = BigInt(Math.round(input.valueAsNumber * 1e6));
+    const shares = Array.from({ length: k }, (_, i) => ceilDiv(cost, BigInt(i + 1)));
+    const net = shares[k - 1], next = ceilDiv(cost, BigInt(k + 1));
+    $("#mChain").textContent = shares.map(plain).join(" → ");
+    $("#mBars").replaceChildren(costChart(shares));
+    const rebate = k > 1 ? `Each earlier holder gets $${plain(shares[k - 2] - net)} back.` : "The first holder covers the full cost.";
+    $("#mRead").replaceChildren(h("strong", null, "$" + plain(net) + " net per holder"), " · " + rebate + " Next buyer pays $" + plain(next) + ".");
   };
 
   // ---------- headline numbers ----------
   const renderTiles = () => {
     const run = state.run;
     const st = stats();
-    const src = state.liveOk ? "live from the contract" : "from the run";
+    const recorded = state.runSource === "run.sample.json" ? "Sample run" : "Recorded run";
+    const src = state.liveOk ? "Live contract" : recorded;
     const tile = (name, value, source, key) =>
       tilt(h("div", { class: "tile" + (key ? " key" : "") }, h("div", { class: "label" }, name), h("div", { class: "value" }, value), h("div", { class: "src" }, source)));
     const out = [];
     if (run) {
-      out.push(tile("If every agent had computed alone", usd2(run.cost_if_every_agent_computed_alone_micro_usdc), "from the run"));
-      out.push(tile("Paid through Splitback", usd2(run.cost_actually_paid_micro_usdc), "from the run"));
-      out.push(tile("Saved", run.saving_percent + "%", "from the run", true));
+      out.push(tile("Compute cost saved", run.saving_percent + "%", recorded, true));
+      out.push(tile("Computing alone", usd2(run.cost_if_every_agent_computed_alone_micro_usdc), recorded));
+      out.push(tile("Paid through Splitback", usd2(run.cost_actually_paid_micro_usdc), recorded));
     }
     if (st) {
       out.push(tile("Joins", String(st.joins), src));
@@ -187,7 +207,12 @@
     $("#entNote").textContent = state.liveOk
       ? "Read from the contract just now. Each chart is the price per holder as holders joined."
       : "From the bundled run. Each chart is the price per holder as holders joined.";
-    const cards = list.map((e) => {
+    const filter = $("#entry-filter");
+    const selected = filter.value;
+    const statuses = [...new Set(list.map(e => statusOf(e.status)))].sort();
+    filter.replaceChildren(new Option("All entries (" + list.length + ")", ""), ...statuses.map(status => new Option(status, status)));
+    filter.value = statuses.includes(selected) ? selected : "";
+    const cards = list.filter(e => !filter.value || statusOf(e.status) === filter.value).map((e) => {
       const status = statusOf(e.status);
       const cost = big(e.cost);
       const holders = Number(e.holders) || 0;
@@ -196,7 +221,7 @@
       const bond = e.bond != null ? usd(e.bond) : status === "Voided" ? "slashed" : status === "Closed" ? "returned" : usd(cost * 2n);
       const kv = [
         ["Publisher", who(e.publisher)], ["Cost", usd(cost)],
-        ["Holders", String(holders)], ["Each paid net", usd(net)],
+        ["Holders", String(holders)], [status === "Voided" ? "Share before refund" : "Each paid net", usd(net)],
         ["Next buyer pays", next], ["Bond", bond],
       ];
       const votes = status === "Challenged" && e.votes_uphold
@@ -204,7 +229,8 @@
         : null;
       return tilt(h("article", { class: "card " + status },
         h("div", { class: "card-head" }, h("span", { class: "id" }, "entry " + e.id), h("span", { class: "badge " + status }, status)),
-        h("div", { class: "spec" }, e.spec || ""),
+        h("h3", { class: "task-title" }, (e.spec || "Entry").split(":")[0].replaceAll("-", " ")),
+        h("div", { class: "spec", title: e.spec }, (e.spec || "").split(":").slice(1).join(":").replaceAll(";", " · ")),
         stepChart(cost, holders),
         h("dl", { class: "kv" }, kv.map(([a, b]) => h("div", null, h("dt", null, a), h("dd", null, b)))),
         votes));
@@ -221,8 +247,8 @@
       byRound.get(ev.round).push(ev.text);
     }
     const blocks = [...byRound.entries()].map(([round, texts]) =>
-      h("div", { class: "round" },
-        h("h3", null, "Round " + round, round === 0 ? h("small", null, " · sellers publish") : null),
+      h("details", { class: "round" },
+        h("summary", null, h("strong", null, "Round " + round), h("span", null, round === 0 ? "Sellers publish" : texts.some(t => t.includes("UPHELD")) ? "Challenge upheld" : "Market activity"), h("small", null, texts.length + " events")),
         h("ol", null, texts.map((t) => {
           const cls = /UPHELD|slashed|wrong result|found it wrong/.test(t) ? "bad" : /challenge/i.test(t) ? "warn" : /^end of round/.test(t) ? "sum" : null;
           return h("li", { class: cls }, t.replace(/\s+/g, " "));
@@ -250,7 +276,7 @@
     });
     $("#receipts").replaceChildren(...rows);
     $("#recNote").textContent = rows.length
-      ? `${rows.length} receipts, one per purchase.` + (run.explorer_tx_url ? " Each links to its transaction." : " This run was local, so there are no explorer links.")
+      ? `${rows.length} recorded receipts.` + (run.explorer_tx_url ? " Each links to its transaction." : " This run was local, so there are no explorer links.")
       : "No receipts in the run data.";
   };
 
@@ -331,8 +357,8 @@
       if (reduced.matches || ev.pointerType === "touch") return;
       const r = el.getBoundingClientRect();
       const x = (ev.clientX - r.left) / r.width - 0.5, y = (ev.clientY - r.top) / r.height - 0.5;
-      el.style.setProperty("--ry", (x * 7).toFixed(2) + "deg");
-      el.style.setProperty("--rx", (-y * 7).toFixed(2) + "deg");
+      el.style.setProperty("--ry", (x * 2).toFixed(2) + "deg");
+      el.style.setProperty("--rx", (-y * 2).toFixed(2) + "deg");
     });
     el.addEventListener("pointerleave", () => { el.style.removeProperty("--rx"); el.style.removeProperty("--ry"); });
     return el;
@@ -427,6 +453,7 @@
     setTimeout(() => { btn.textContent = "Copy"; }, 1500);
   });
   const bump = (by) => { const el = $("#mk"); el.value = Math.min(20, Math.max(1, Number(el.value) + by)); renderMechanism(); };
+  $("#entry-filter").addEventListener("change", renderEntries);
   $("#mk").addEventListener("input", renderMechanism);
   $("#mc").addEventListener("input", renderMechanism);
   $("#mkDown").addEventListener("click", () => bump(-1));
