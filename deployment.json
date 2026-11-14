@@ -1,6 +1,6 @@
 {
   "rpcUrl": "https://test.rpc.fastnear.com",
-  "contract": "splitback.smwg0fyby.splitback-swarm5.testnet",
-  "token": "usdc.smwg0fyby.splitback-swarm5.testnet",
+  "contract": "splitback.smwgbt9yi.splitback-swarm5.testnet",
+  "token": "usdc.smwgbt9yi.splitback-swarm5.testnet",
   "network": "testnet"
 }
