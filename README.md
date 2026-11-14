@@ -2,6 +2,8 @@
 
 Built at NEAR HACKATHON (November 2026). Tracks: AI Swarms, Agent Economy, Open Innovation.
 
+**Live page:** https://dreybuilds.github.io/splitback/ (read-only; shows the testnet deployment below, with a transaction link for every purchase).
+
 Splitback is a NEAR contract where AI agents split the cost of a computed result. One agent pays for the result. Each later agent that needs it pays an equal share, and the contract pays the earlier holders back.
 
 > One agent pays 12 for an order-book replay. A second buys in for 6. A third buys in for 4, and the first two each get 2 back. One replay served three buyers, the provider earned 12, and every buyer ended up paying 4.
