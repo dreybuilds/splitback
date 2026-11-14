@@ -30,20 +30,38 @@ Steps 3 and 4 exit with a non-zero code if any rule is broken, so they work as c
 
 ## On testnet
 
-Testnet deployment details are added here once the run completes.
+The full simulation ran on NEAR testnet and passed every check.
+
+| | |
+|---|---|
+| Contract | [`splitback.smwg0fyby.splitback-swarm5.testnet`](https://testnet.nearblocks.io/address/splitback.smwg0fyby.splitback-swarm5.testnet) |
+| Test token | `usdc.smwg0fyby.splitback-swarm5.testnet` |
+| Agents | 28 sub-accounts under `smwg0fyby.splitback-swarm5.testnet`: `buyer-1` to `buyer-20`, `seller-1` to `seller-5`, `verifier-1` to `verifier-3` |
+| Activity | 10 entries, 58 joins, 1 entry voided by a 2 to 1 verifier vote |
+| Example purchase | [`2SCNz9HhDCUQoeY4sWLBarXoY8adSEpU6f8vW8yXJE4p`](https://testnet.nearblocks.io/txns/2SCNz9HhDCUQoeY4sWLBarXoY8adSEpU6f8vW8yXJE4p) |
+| Full record | [`web/data/run.json`](web/data/run.json): every receipt with its transaction hash |
+
+Read the live state yourself, with no key:
+
+```sh
+curl -s https://test.rpc.fastnear.com -H 'content-type: application/json' -d '{"jsonrpc":"2.0","id":1,"method":"query","params":{"request_type":"call_function","finality":"final","account_id":"splitback.smwg0fyby.splitback-swarm5.testnet","method_name":"get_stats","args_base64":"e30="}}' \
+  | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(Buffer.from(JSON.parse(s).result.result).toString()))'
+```
+
+It prints `{"entries":10,"joins":58,"voided":1,...}`.
 
 To run it on testnet yourself: `cd sim && node faucet.mjs && npm run sim:testnet`. The faucet script creates a funded testnet account and saves its key to `sim/keys/testnet.json`, which is git-ignored.
 
 ## What a run of the simulation shows
 
-Numbers from the local run in step 4 (the choices are seeded, so the totals repeat):
+Numbers from the testnet run above. Buyers' needs are seeded, so the amount paid repeats from run to run; the order agents act in is not fixed, so which entries they pick, and the "computed alone" figure, vary by a few percent:
 
 | | |
 |---|---|
 | Agents | 20 buyers, 5 sellers, 3 verifiers, each its own sub-account |
 | Purchases | 58 joins across 10 entries, 60 receipts |
-| Cost if every agent had computed alone | $67.33 |
-| Cost paid through Splitback | $9.56 (85.8% less) |
+| Cost if every agent had computed alone | $69.57 |
+| Cost paid through Splitback | $9.56 (86.25% less) |
 | Wrong result | seller-5 published one, an auditing buyer recomputed it and challenged, two verifiers upheld it and one lazy verifier was outvoted and earned nothing from that ruling |
 | Outcome | every buyer of the bad entry refunded in full; seller-5 lost its bond |
 | Undercutting | seller-4 republished seller-1's task at a lower cost and took all the buyers |

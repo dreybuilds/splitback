@@ -16,8 +16,8 @@ export async function network(testnet) {
       parentId: cfg.accountId,
       humanKey: cfg.privateKey,
       // Testnet gas is prepaid per call, so each agent needs headroom. See README for funding.
-      nearRoot: BigInt(cfg.rootNear ?? 27) * NEAR,
-      nearContract: { splitback: 5n * NEAR + NEAR / 2n, usdc: 3n * NEAR + NEAR / 2n },
+      nearRoot: BigInt(cfg.rootNear ?? 21) * NEAR,
+      nearContract: { splitback: 3n * NEAR + NEAR / 2n, usdc: 2n * NEAR + NEAR / 2n },
       nearAgent: (NEAR * 45n) / 100n,
       stop: async () => {},
     };

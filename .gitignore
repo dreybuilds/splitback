@@ -8,3 +8,4 @@ keys/
 sim/.sandbox/
 .DS_Store
 sim/out/
+*.env

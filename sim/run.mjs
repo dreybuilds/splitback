@@ -115,8 +115,14 @@ async function main() {
   // The content store stands in for each seller's HTTP endpoint. It only serves
   // an account the contract says is a holder.
   const store = new Map();
-  const serve = async (entryId, resultHash, who) =>
-    (await v("is_holder", { entry_id: entryId, account_id: who })) ? store.get(resultHash) : undefined;
+  const serve = async (entryId, resultHash, who) => {
+    // A public RPC node can lag a few blocks behind the join it is asked about.
+    for (let attempt = 0; attempt < 8; attempt++) {
+      if (await v("is_holder", { entry_id: entryId, account_id: who })) return store.get(resultHash);
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    return undefined;
+  };
 
   const receipts = [];
   const grief = [];
