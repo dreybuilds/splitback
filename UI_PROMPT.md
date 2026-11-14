@@ -9,7 +9,7 @@ Splitback is a smart contract on NEAR where AI agents split the cost of a comput
 - One agent pays for an expensive result (for example a reproducible order-book replay) and publishes its input manifest and the SHA-256 of the result. The result itself stays private.
 - Each later agent that wants the result pays an equal share of the original cost: `ceil(C / k)`, where `C` is the cost and `k` is the number of holders after it joins.
 - The contract pays the earlier holders back, so every holder always ends up having paid the same amount, whenever they joined.
-- The publisher locks a bond of `2 × C`. If a verifier agent recomputes the task and finds the result wrong, the entry is void, buyers are refunded in full, and the challenger takes the bond.
+- The publisher locks a bond of `2 × C`. Anyone can challenge a result. A committee of three verifier agents votes and two votes decide. If they uphold the challenge, the entry is void, buyers are refunded in full, the challenger takes the bond, and the verifiers who voted with the outcome share a tenth of it.
 
 The one-minute story the page must make obvious:
 
@@ -56,7 +56,7 @@ Tone: precise and technical, like an instrument panel for a market. Dark theme b
 4. **Entries (live).** One card per entry: task spec, publisher, status (Open, Retired, Challenged, Voided, Closed), cost, holders, what each holder has paid net, the next buyer's price, bond. Make the falling price visible, for example a small step chart of `ceil(C / k)` for `k = 1..holders`. Voided entries must look clearly different.
 5. **Rounds.** The event feed grouped by round (round 0 is sellers publishing). This is where a judge sees rounds, who bought what, the challenge and the slash.
 6. **Receipts.** A table: round, buyer, what was bought, from whom, price, what it would have cost alone, whether the hash check passed, audit result, and a link to the transaction.
-7. **The bad actor.** A short panel: which seller published a wrong result, who caught it, the seller's balance before and after, the challenger's balance before and after.
+7. **The bad actor.** A short panel: which seller published a wrong result, who caught it, how the three verifiers voted (it is in the round events), the seller's balance before and after, the challenger's balance before and after, and what each verifier earned. While an entry is `Challenged`, show its live `votes_uphold` and `votes_reject` against the threshold from `get_config`.
 8. **Footer.** Links to the repository, `RULES.md`, and the contract on the explorer. One sentence: "Test token on NEAR testnet. Not a real stablecoin."
 
 ## Data
@@ -89,7 +89,7 @@ POST to `rpcUrl`:
 | `get_stats` | `{}` | `{ entries, joins, voided, cost_published, paid_in, rebated, slashed }` (counts are numbers, amounts are strings) |
 | `get_entries` | `{ "from_index": 0, "limit": 100 }` | array of entries (below) |
 | `get_entry` | `{ "entry_id": 3 }` | one entry or null |
-| `get_config` | `{}` | `{ token, verifier, challenge_window_ns, challenge_stake_divisor, bond_multiplier }` |
+| `get_config` | `{}` | `{ token, verifiers: [account ids], threshold, challenge_window_ns, challenge_stake_divisor, bond_multiplier }` |
 | `balance_of` | `{ "account_id": "..." }` | amount string |
 | `get_holding` | `{ "entry_id": 3, "account_id": "..." }` | `{ paid, claimed, joined_as, claimable }` or null |
 | `quote` | `{ "entry_id": 3 }` | amount string: the next buyer's price |
@@ -99,7 +99,7 @@ An entry:
 ```json
 { "id": 6, "task_key": "<64 hex>", "spec": "orderbook-replay:market=NEAR-USDC;seed=2026-11-13;events=1500000",
   "result_hash": "<64 hex>", "cost": "2000000", "publisher": "seller-2....testnet", "provider": null,
-  "holders": 5, "status": "Open", "challenger": null, "bond": "4000000",
+  "holders": 5, "status": "Open", "challenger": null, "votes_uphold": [], "votes_reject": [], "bond": "4000000",
   "paid_in": "1716667", "rebated": "1716665", "current_share": "400000", "next_price": "333334",
   "created_at": "<ns timestamp>", "last_activity": "<ns timestamp>" }
 ```
@@ -109,13 +109,14 @@ An entry:
 Written by the simulation after it runs on testnet. `web/data/run.sample.json` has the same shape from a local run; use it while developing and as the fallback when `run.json` is missing. Open the sample file to see real values. Top-level keys:
 
 - `network`, `contract`, `token`, `rpc_url`, `explorer_tx_url` (prefix for transaction links; null in the sample)
-- `agents`: `{ buyers, sellers, verifier }`
+- `agents`: `{ buyers, sellers, verifiers, votes_needed }`
 - `entries`: `[{ id, spec, publisher, status, cost, holders, each_paid_net }]`
 - `stats`: same shape as `get_stats`
 - `cost_if_every_agent_computed_alone_micro_usdc`, `cost_actually_paid_micro_usdc`, `saving_percent`
 - `rounding_dust_left_in_contract_micro_usdc`
 - `poisoner_seller_5_balance`: `{ start, end }`
 - `challenger` (agent name) and `challenger_balance`: `{ start, end }`
+- `verifier_earnings`: `{ "verifier-1": amount, "verifier-2": amount, "verifier-3": amount }`
 - `events`: `[{ round, text }]` in order
 - `receipts`: `[{ round, buyer, bought, entry, from, price_micro_usdc, alone_would_cost_micro_usdc, hash_check_passed, audit, tx }]`
 - `problems`: should be an empty array; if it is not, show its contents in a visible warning
